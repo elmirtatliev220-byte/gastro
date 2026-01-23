@@ -1,20 +1,133 @@
-ㅤㅤㅤㅤㅤ, [23.01.2026 18:50]
-Object.entries(i18n[lang]).forEach(([k, v]) => {
-        const el = document.getElementById(label-${k});
-        if (el) el.innerHTML = v;
-    });
-    document.getElementById('name-input').placeholder = i18n[lang].phName;
-    document.getElementById('p-input').placeholder = i18n[lang].phPhone;
-    document.getElementById('a-input').placeholder = i18n[lang].phAddr;
-    document.getElementById('comment-input').placeholder = i18n[lang].phComment;
-    updateUI();
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Gastro Gold Azerbaijan</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080808;
+            --card-bg: #111111;
+            --accent: #FFD200;
+            --text: #ffffff;
+            --text-dim: #aaaaaa;
+            --border: rgba(255, 255, 255, 0.08);
+            --error: #ff4d4d;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Unbounded', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container { padding: 20px 20px 280px; max-width: 500px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+        h1 { font-size: 32px; font-weight: 900; margin: 0; line-height: 1; letter-spacing: -1px; }
+        .lang-switch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 4px; display: flex; gap: 4px; }
+        .lang-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-dim); font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .lang-btn.active { background: var(--accent); color: #000; }
+        
+        .product-row { display: flex; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border); align-items: center; }
+        .product-img { width: 90px; height: 90px; border-radius: 18px; object-fit: cover; background: #222; border: 1px solid var(--border); }
+        .product-info { flex: 1; }
+        .product-info h3 { margin: 0 0 5px; font-size: 15px; font-weight: 700; }
+        .product-info p { margin: 0; font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+        .price { font-weight: 900; color: var(--accent); font-size: 14px; margin-top: 5px; }
+        
+        .add-pill { background: #fff; color: #000; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 8px; }
+        .counter-pill { display: flex; align-items: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 4px; margin-top: 8px; }
+        .circle-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--accent); color: #000; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-function calculateTotal() {
-    return Object.entries(state).reduce((sum, [id, q]) => {
-        const prod = products.find(p => p.id == id);
-        return sum + (prod ? prod.price * q : 0);
-    }, 0);
+        .form-card { background: var(--card-bg); border-radius: 24px; padding: 24px; border: 1px solid var(--border); margin-top: 40px; }
+        .form-card h4 { font-size: 10px; text-transform: uppercase; color: var(--accent); margin: 0 0 20px; letter-spacing: 1px; }
+        input { width: 100%; background: transparent; border: none; border-bottom: 1.5px solid var(--border); padding: 12px 0; color: #fff; margin-bottom: 15px; outline: none; font-family: inherit; font-size: 15px; border-radius: 0; }
+        input:focus { border-color: var(--accent); }
+        input.invalid { border-color: var(--error); }
+
+        .floating-cart { position: fixed; bottom: 20px; left: 16px; right: 16px; background: #fff; border-radius: 24px; padding: 12px 12px 12px 24px; display: none; justify-content: space-between; align-items: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6); z-index: 1000; }
+        .floating-cart.active { display: flex; }
+        .order-trigger { background: #000; color: #fff; border: none; padding: 14px 28px; border-radius: 18px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
+        
+        #done-screen { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; text-align: center; padding: 30px; }
+        .flying-item { position: fixed; z-index: 5000; width: 60px; height: 60px; border-radius: 12px; pointer-events: none; transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .bounce { animation: bounce 0.4s ease; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1 id="title-main">GASTRO<br><span style="color:var(--accent)">GOLD</span></h1>
+        </div>
+        <div class="lang-switch">
+            <button class="lang-btn active" id="btn-ru" onclick="setLang('ru')">RU</button>
+            <button class="lang-btn" id="btn-az" onclick="setLang('az')">AZ</button>
+        </div>
+    </header>
+
+    <div id="menu-stack"></div>
+
+    <div class="form-card" id="order-form">
+        <h4 id="label-order">Оформление</h4>
+        <input type="text" id="name-input" placeholder="Имя">
+        <input type="tel" id="p-input" placeholder="+994 (__) ___-__-__">
+        <input type="text" id="a-input" placeholder="Адрес доставки">
+    </div>
+</div>
+
+<div class="floating-cart" id="main-cart">
+    <div style="color:#000">
+        <span style="font-size:9px; font-weight:900; text-transform:uppercase; display:block; opacity:0.6;" id="label-total">ИТОГО</span>
+        <b id="final-sum" style="font-size:20px">0.00 ₼</b>
+    </div>
+    <button class="order-trigger" onclick="sendOrder()" id="label-btnOrder">ЗАКАЗАТЬ</button>
+</div>
+
+<div id="done-screen">
+    <div style="font-size:60px; color:var(--accent); margin-bottom:20px;">✓</div>
+    <h2 id="label-success">ПРИНЯТО!</h2>
+    <p id="label-successSub" style="color:var(--text-dim); line-height:1.5;">Ваш заказ отправлен. Мы свяжемся с вами в ближайшее время.</p>
+    <button onclick="location.reload()" style="background:transparent; border:1px solid #333; color:#fff; padding:12px 30px; border-radius:12px; margin-top:30px; font-size:12px; font-weight:700;">НАЗАД</button>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+let currentLang = 'ru';
+let state = {};
+
+const products = [
+    { id: 1, price: 25.5, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300", ru: {n: "Империал Бургер", d: "Мраморная говядина, трюфель"}, az: {n: "İmperial Burqer", d: "Mərmər mal əti, trüfel"} },
+    { id: 2, price: 18.0, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300", ru: {n: "Пицца Черная", d: "Чернила каракатицы, морепродукты"}, az: {n: "Qara Pizza", d: "Mürəkkəbbalığı mürəkkəbi, dəniz məhsulları"} },
+    { id: 3, price: 32.0, img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=300", ru: {n: "Суши Платинум", d: "Тунец Торо, икра"}, az: {n: "Platin Suşi", d: "Tuna Toro, kürü"} }
+];
+
+const i18n = {
+    ru: { order: "Оформление", total: "Итого", btnOrder: "Заказать", success: "ПРИНЯТО!", successSub: "Мы свяжемся с вами в ближайшее время.", add: "Добавить", name: "Имя", addr: "Адрес доставки" },
+    az: { order: "Rəsmiləşdirmə", total: "Cəmi", btnOrder: "Sifariş et", success: "QƏBUL EDİLDİ!", successSub: "Tezliklə sizinlə əlaqə saxlayacağıq.", add: "Əlavə et", name: "Ad", addr: "Çatdırılma ünvanı" }
+};
+
+function setLang(lang) {
+    currentLang = lang;
+    document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
+    document.getElementById('btn-az').classList.toggle('active', lang === 'az');
+    
+    document.getElementById('label-order').innerText = i18n[lang].order;
+    document.getElementById('label-total').innerText = i18n[lang].total;
+    document.getElementById('label-btnOrder').innerText = i18n[lang].btnOrder;
+    document.getElementById('label-success').innerText = i18n[lang].success;
+    document.getElementById('label-successSub').innerText = i18n[lang].successSub;
+    document.getElementById('name-input').placeholder = i18n[lang].name;
+    document.getElementById('a-input').placeholder = i18n[lang].addr;
+    
+    updateUI();
 }
 
 function updateUI() {
@@ -22,32 +135,35 @@ function updateUI() {
     list.innerHTML = products.map(p => {
         const q = state[p.id] || 0;
         const t = p[currentLang];
-        return 
+        return `
             <div class="product-row">
-                <img src="${p.img}" class="product-img" id="img-${p.id}" alt="${t.n}">
+                <img src="${p.img}" class="product-img" id="img-${p.id}">
                 <div class="product-info">
                     <h3>${t.n}</h3>
                     <p>${t.d}</p>
+                    <div class="price">${p.price.toFixed(2)} ₼</div>
                 </div>
                 <div style="text-align:right;">
-                    <div class="price">${p.price.toFixed(2)} ₼</div>
-                    ${q > 0 ? 
-                        <div class="counter-pill" style="margin-top:10px;">
+                    ${q > 0 ? `
+                        <div class="counter-pill">
                             <button class="circle-btn" onclick="act(${p.id},-1)">−</button>
-                            <span style="min-width:20px;text-align:center;font-weight:700;">${q}</span>
+                            <span style="min-width:20px; text-align:center; font-weight:700;">${q}</span>
                             <button class="circle-btn" onclick="act(${p.id},1, event)">+</button>
                         </div>
-                     : 
-                        <button class="add-pill" onclick="act(${p.id},1, event)" style="margin-top:10px;">${i18n[currentLang].add}</button>
-                    }
+                    ` : `
+                        <button class="add-pill" onclick="act(${p.id},1, event)">${i18n[currentLang].add}</button>
+                    `}
                 </div>
-            </div>;
+            </div>`;
     }).join('');
 
-    const total = calculateTotal();
+    let total = 0;
+    Object.entries(state).forEach(([id, q]) => {
+        total += products.find(p => p.id == id).price * q;
+    });
+    
     document.getElementById('final-sum').innerText = total.toFixed(2) + ' ₼';
     document.getElementById('main-cart').classList.toggle('active', total > 0);
-    localStorage.setItem('cart', JSON.stringify(state));
 }
 
 function flyToCart(imgId) {
@@ -63,13 +179,10 @@ function flyToCart(imgId) {
     document.body.appendChild(clone);
 
     const cartRect = cart.getBoundingClientRect();
-    const targetX = cartRect.left + cartRect.width / 2 - 40;
-    const targetY = cartRect.top + cartRect.height / 2 - 40;
-
     requestAnimationFrame(() => {
-        clone.style.left = targetX + 'px';
-        clone.style.top = targetY + 'px';
-        clone.style.transform = 'scale(0.2) rotate(15deg)';
+        clone.style.left = (cartRect.left + 50) + 'px';
+        clone.style.top = (cartRect.top) + 'px';
+        clone.style.transform = 'scale(0.1) rotate(15deg)';
         clone.style.opacity = '0';
     });
 
@@ -81,78 +194,43 @@ function flyToCart(imgId) {
 }
 
 function act(id, delta, event) {
-    if (delta > 0 && event) {
-        flyToCart('img-' + id);
-    }
+    if (delta > 0 && event) flyToCart('img-' + id);
     state[id] = (state[id] || 0) + delta;
     if (state[id] <= 0) delete state[id];
     tg.HapticFeedback?.selectionChanged();
     updateUI();
 }
 
-function clearCart() {
-    state = {};
-    localStorage.removeItem('cart');
-    updateUI();
-    tg.HapticFeedback?.notificationOccurred('success');
-}
-
-function showPreview() {
-    const items = products.filter(p => state[p.id] > 0);
-    if (items.length === 0) return;
-    const list = document.getElementById('preview-items');
-    list.innerHTML = items.map(p => `
-
-ㅤㅤㅤㅤㅤ, [23.01.2026 18:50]
-<div class="preview-item">
-            <div style="display:flex; justify-content:space-between;">
-                <b>${p[currentLang].n}</b>
-                <span>${state[p.id]} x ${p.price.toFixed(2)} ₼</span>
-            </div>
-        </div>
-    ).join('');
-    const total = calculateTotal();
-    document.getElementById('preview-total-sum').innerText = ${total.toFixed(2)} ₼`;
-    document.getElementById('preview-modal').style.display = 'flex';
-    tg.HapticFeedback?.impactOccurred('medium');
-}
-
-function closePreview() { document.getElementById('preview-modal').style.display = 'none'; }
-
 function sendOrder() {
     const name = document.getElementById('name-input');
     const phone = document.getElementById('p-input');
     const addr = document.getElementById('a-input');
-    let err = false;
+    
+    let hasError = false;
     [name, phone, addr].forEach(el => {
-        if (!el.value.trim()) { el.classList.add('invalid'); err = true; }
+        if (!el.value.trim()) { el.classList.add('invalid'); hasError = true; }
         else el.classList.remove('invalid');
     });
-    if (phone.value.length < 18) { phone.classList.add('invalid'); err = true; }
-    if (err) {
-        closePreview();
+
+    if (hasError) {
         tg.HapticFeedback?.notificationOccurred('error');
-        document.getElementById('order-form').scrollIntoView({behavior:'smooth', block:'center'});
         return;
     }
+
     const orderData = {
-        name: name.value.trim(), phone: phone.value.trim(), address: addr.value.trim(),
-        comment: document.getElementById('comment-input').value.trim(),
-        items: Object.entries(state).map(([id, q]) => {
-            const p = products.find(prod => prod.id == id);
-            return { name: p[currentLang].n, quantity: q };
-        }),
-        total: calculateTotal()
+        name: name.value,
+        phone: phone.value,
+        address: addr.value,
+        items: Object.entries(state).map(([id, q]) => ({
+            name: products.find(p => p.id == id)[currentLang].n,
+            quantity: q
+        })),
+        total: document.getElementById('final-sum').innerText
     };
+
     tg.sendData(JSON.stringify(orderData));
-    document.getElementById('preview-modal').style.display = 'none';
     document.getElementById('done-screen').style.display = 'flex';
     tg.HapticFeedback?.notificationOccurred('success');
-}
-
-function openNavigator() {
-    tg.HapticFeedback?.impactOccurred('medium');
-    tg.openLink('https://www.google.com/maps/dir/?api=1&destination=40.3771,49.8517');
 }
 
 document.getElementById('p-input').addEventListener('input', e => {
