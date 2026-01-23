@@ -1,0 +1,174 @@
+ㅤㅤㅤㅤㅤ, [23.01.2026 18:50]
+Object.entries(i18n[lang]).forEach(([k, v]) => {
+        const el = document.getElementById(label-${k});
+        if (el) el.innerHTML = v;
+    });
+    document.getElementById('name-input').placeholder = i18n[lang].phName;
+    document.getElementById('p-input').placeholder = i18n[lang].phPhone;
+    document.getElementById('a-input').placeholder = i18n[lang].phAddr;
+    document.getElementById('comment-input').placeholder = i18n[lang].phComment;
+    updateUI();
+}
+
+function calculateTotal() {
+    return Object.entries(state).reduce((sum, [id, q]) => {
+        const prod = products.find(p => p.id == id);
+        return sum + (prod ? prod.price * q : 0);
+    }, 0);
+}
+
+function updateUI() {
+    const list = document.getElementById('menu-stack');
+    list.innerHTML = products.map(p => {
+        const q = state[p.id] || 0;
+        const t = p[currentLang];
+        return 
+            <div class="product-row">
+                <img src="${p.img}" class="product-img" id="img-${p.id}" alt="${t.n}">
+                <div class="product-info">
+                    <h3>${t.n}</h3>
+                    <p>${t.d}</p>
+                </div>
+                <div style="text-align:right;">
+                    <div class="price">${p.price.toFixed(2)} ₼</div>
+                    ${q > 0 ? 
+                        <div class="counter-pill" style="margin-top:10px;">
+                            <button class="circle-btn" onclick="act(${p.id},-1)">−</button>
+                            <span style="min-width:20px;text-align:center;font-weight:700;">${q}</span>
+                            <button class="circle-btn" onclick="act(${p.id},1, event)">+</button>
+                        </div>
+                     : 
+                        <button class="add-pill" onclick="act(${p.id},1, event)" style="margin-top:10px;">${i18n[currentLang].add}</button>
+                    }
+                </div>
+            </div>;
+    }).join('');
+
+    const total = calculateTotal();
+    document.getElementById('final-sum').innerText = total.toFixed(2) + ' ₼';
+    document.getElementById('main-cart').classList.toggle('active', total > 0);
+    localStorage.setItem('cart', JSON.stringify(state));
+}
+
+function flyToCart(imgId) {
+    const imgElement = document.getElementById(imgId);
+    const cart = document.getElementById('main-cart');
+    if (!imgElement || !cart) return;
+
+    const clone = imgElement.cloneNode();
+    clone.classList.add('flying-item');
+    const rect = imgElement.getBoundingClientRect();
+    clone.style.left = rect.left + 'px';
+    clone.style.top = rect.top + 'px';
+    document.body.appendChild(clone);
+
+    const cartRect = cart.getBoundingClientRect();
+    const targetX = cartRect.left + cartRect.width / 2 - 40;
+    const targetY = cartRect.top + cartRect.height / 2 - 40;
+
+    requestAnimationFrame(() => {
+        clone.style.left = targetX + 'px';
+        clone.style.top = targetY + 'px';
+        clone.style.transform = 'scale(0.2) rotate(15deg)';
+        clone.style.opacity = '0';
+    });
+
+    clone.addEventListener('transitionend', () => {
+        clone.remove();
+        cart.classList.add('bounce');
+        setTimeout(() => cart.classList.remove('bounce'), 400);
+    });
+}
+
+function act(id, delta, event) {
+    if (delta > 0 && event) {
+        flyToCart('img-' + id);
+    }
+    state[id] = (state[id] || 0) + delta;
+    if (state[id] <= 0) delete state[id];
+    tg.HapticFeedback?.selectionChanged();
+    updateUI();
+}
+
+function clearCart() {
+    state = {};
+    localStorage.removeItem('cart');
+    updateUI();
+    tg.HapticFeedback?.notificationOccurred('success');
+}
+
+function showPreview() {
+    const items = products.filter(p => state[p.id] > 0);
+    if (items.length === 0) return;
+    const list = document.getElementById('preview-items');
+    list.innerHTML = items.map(p => `
+
+ㅤㅤㅤㅤㅤ, [23.01.2026 18:50]
+<div class="preview-item">
+            <div style="display:flex; justify-content:space-between;">
+                <b>${p[currentLang].n}</b>
+                <span>${state[p.id]} x ${p.price.toFixed(2)} ₼</span>
+            </div>
+        </div>
+    ).join('');
+    const total = calculateTotal();
+    document.getElementById('preview-total-sum').innerText = ${total.toFixed(2)} ₼`;
+    document.getElementById('preview-modal').style.display = 'flex';
+    tg.HapticFeedback?.impactOccurred('medium');
+}
+
+function closePreview() { document.getElementById('preview-modal').style.display = 'none'; }
+
+function sendOrder() {
+    const name = document.getElementById('name-input');
+    const phone = document.getElementById('p-input');
+    const addr = document.getElementById('a-input');
+    let err = false;
+    [name, phone, addr].forEach(el => {
+        if (!el.value.trim()) { el.classList.add('invalid'); err = true; }
+        else el.classList.remove('invalid');
+    });
+    if (phone.value.length < 18) { phone.classList.add('invalid'); err = true; }
+    if (err) {
+        closePreview();
+        tg.HapticFeedback?.notificationOccurred('error');
+        document.getElementById('order-form').scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+    }
+    const orderData = {
+        name: name.value.trim(), phone: phone.value.trim(), address: addr.value.trim(),
+        comment: document.getElementById('comment-input').value.trim(),
+        items: Object.entries(state).map(([id, q]) => {
+            const p = products.find(prod => prod.id == id);
+            return { name: p[currentLang].n, quantity: q };
+        }),
+        total: calculateTotal()
+    };
+    tg.sendData(JSON.stringify(orderData));
+    document.getElementById('preview-modal').style.display = 'none';
+    document.getElementById('done-screen').style.display = 'flex';
+    tg.HapticFeedback?.notificationOccurred('success');
+}
+
+function openNavigator() {
+    tg.HapticFeedback?.impactOccurred('medium');
+    tg.openLink('https://www.google.com/maps/dir/?api=1&destination=40.3771,49.8517');
+}
+
+document.getElementById('p-input').addEventListener('input', e => {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.startsWith('994')) v = v.slice(3);
+    let res = '+994 ';
+    if (v) res += '(' + v.slice(0,2);
+    if (v.length >= 3) res += ') ' + v.slice(2,5);
+    if (v.length >= 6) res += '-' + v.slice(5,7);
+    if (v.length >= 8) res += '-' + v.slice(7,9);
+    e.target.value = res;
+});
+
+tg.ready();
+tg.expand();
+setLang('ru');
+</script>
+</body>
+</html>
