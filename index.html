@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,308 +6,499 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Gastro Gold Azerbaijan</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #080808;
-            --card-bg: #111111;
+            --bg: #0c0c0c;
+            --card-bg: #161616;
             --accent: #FFD200;
+            --accent-grad: linear-gradient(135deg, #FFD200 0%, #B89600 100%);
             --text: #ffffff;
-            --text-dim: #aaaaaa;
-            --border: rgba(255, 255, 255, 0.08);
+            --text-dim: #999999;
+            --border: rgba(255, 255, 255, 0.06);
             --error: #ff4d4d;
+            --safe-area-bottom: env(safe-area-inset-bottom);
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            font-family: 'Unbounded', sans-serif;
+            font-family: 'Manrope', sans-serif;
             background: var(--bg);
             color: var(--text);
             margin: 0;
             padding: 0;
-            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-user-select: none;
         }
-        .container { padding: 20px 20px 280px; max-width: 500px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-        h1 { font-size: 32px; font-weight: 900; margin: 0; line-height: 1; letter-spacing: -1px; }
-        
-        .lang-switch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 4px; display: flex; gap: 4px; }
-        .lang-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-dim); font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .lang-btn.active { background: var(--accent); color: #000; }
-        
-        /* Меню категорий */
-        .categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 20px; margin-bottom: 10px; scrollbar-width: none; }
+
+        h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
+
+        /* --- Header & Search --- */
+        header {
+            padding: 20px 20px 10px;
+            position: sticky;
+            top: 0;
+            background: rgba(12, 12, 12, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { font-size: 22px; font-weight: 900; line-height: 1; }
+        .logo span { color: var(--accent); }
+
+        .search-container {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .search-container input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            margin-left: 10px;
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        /* --- Categories --- */
+        .categories {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px 20px;
+            scrollbar-width: none;
+        }
         .categories::-webkit-scrollbar { display: none; }
-        .cat-btn { 
-            padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); 
-            background: transparent; color: var(--text-dim); font-size: 10px; font-weight: 700; 
-            white-space: nowrap; text-transform: uppercase; cursor: pointer; transition: 0.3s;
+        .cat-btn {
+            padding: 10px 18px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: 0.3s;
         }
-        .cat-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255, 210, 0, 0.05); }
+        .cat-btn.active {
+            background: var(--accent-grad);
+            color: #000;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(255, 210, 0, 0.2);
+        }
 
-        .product-row { display: flex; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border); align-items: center; }
-        .product-img { width: 90px; height: 90px; border-radius: 18px; object-fit: cover; background: #222; border: 1px solid var(--border); }
-        .product-info { flex: 1; }
-        .product-info h3 { margin: 0 0 5px; font-size: 14px; font-weight: 700; }
-        .product-info p { margin: 0; font-size: 10px; color: var(--text-dim); line-height: 1.4; }
-        .price { font-weight: 900; color: var(--accent); font-size: 14px; margin-top: 5px; }
-        
-        .add-pill { background: #fff; color: #000; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 8px; text-transform: uppercase; }
-        .counter-pill { display: flex; align-items: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 4px; margin-top: 8px; }
-        .circle-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--accent); color: #000; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* --- Product Grid --- */
+        .content { padding: 10px 16px 150px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
 
-        .form-card { background: var(--card-bg); border-radius: 24px; padding: 24px; border: 1px solid var(--border); margin-top: 40px; }
-        .form-card h4 { font-size: 10px; text-transform: uppercase; color: var(--accent); margin: 0 0 20px; letter-spacing: 1px; }
-        input { width: 100%; background: transparent; border: none; border-bottom: 1.5px solid var(--border); padding: 12px 0; color: #fff; margin-bottom: 15px; outline: none; font-family: inherit; font-size: 15px; border-radius: 0; }
-        input:focus { border-color: var(--accent); }
-        input.invalid { border-color: var(--error); }
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            animation: fadeIn 0.4s ease;
+        }
+        .product-img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 14px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .product-card h3 { font-size: 14px; margin: 5px 0; line-height: 1.2; height: 34px; overflow: hidden; }
+        .product-card p { font-size: 11px; color: var(--text-dim); margin: 0 0 10px; height: 30px; overflow: hidden; }
+        .product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .price { font-weight: 800; font-size: 15px; color: var(--accent); }
 
-        /* Кнопка навигации - исправление синего цвета */
-        .nav-btn {
-            display: flex; align-items: center; justify-content: space-between;
-            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-            padding: 16px; border-radius: 18px; text-decoration: none; margin-top: 15px;
+        .add-btn {
+            width: 36px;
+            height: 36px;
+            background: #fff;
+            border-radius: 10px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             transition: 0.2s;
         }
-        .nav-btn:active { background: rgba(255,255,255,0.08); transform: scale(0.98); }
-        .nav-btn span { color: #ffffff !important; text-decoration: none !important; }
-        .nav-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
-        .nav-addr { font-size: 12px; font-weight: 400; }
-        .nav-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #000; }
+        .add-btn:active { transform: scale(0.9); }
 
-        .floating-cart { position: fixed; bottom: 20px; left: 16px; right: 16px; background: #fff; border-radius: 24px; padding: 12px 12px 12px 24px; display: none; justify-content: space-between; align-items: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6); z-index: 1000; }
-        .floating-cart.active { display: flex; }
-        .order-trigger { background: #000; color: #fff; border: none; padding: 14px 28px; border-radius: 18px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
+        .counter-box {
+            display: flex;
+            align-items: center;
+            background: #222;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 8px;
+        }
+        .count-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* --- Floating Cart Bar --- */
+        .cart-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 16px;
+            right: 16px;
+            background: #fff;
+            height: 64px;
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            padding: 0 8px 0 20px;
+            justify-content: space-between;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .cart-bar.active { display: flex; animation: slideUp 0.3s ease; }
+        .cart-info { color: #000; }
+        .cart-info span { display: block; font-size: 10px; font-weight: 700; opacity: 0.6; text-transform: uppercase; }
+        .cart-info b { font-size: 18px; font-family: 'Unbounded'; }
+        .checkout-btn {
+            background: #000;
+            color: #fff;
+            height: 48px;
+            padding: 0 25px;
+            border-radius: 14px;
+            border: none;
+            font-family: 'Unbounded';
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* --- Cart Drawer (Full Screen Modal) --- */
+        #cart-drawer {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            padding-bottom: calc(20px + var(--safe-area-bottom));
+        }
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-draw { background: var(--card-bg); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; }
         
-        #done-screen { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; text-align: center; padding: 30px; }
-        .flying-item { position: fixed; z-index: 5000; width: 60px; height: 60px; border-radius: 12px; pointer-events: none; transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); border: 1px solid var(--accent); }
-        
-        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .bounce { animation: bounce 0.4s ease; }
+        .order-items { flex: 1; overflow-y: auto; }
+        .order-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border); }
+
+        .form-group { margin-top: 20px; }
+        input.modern {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            color: #fff;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+
+        /* --- Success Screen --- */
+        #success-page {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 3000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(100px); } to { transform: translateY(0); } }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent);
+            color: #000;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div>
-            <h1 id="title-main">GASTRO<br><span style="color:var(--accent)">GOLD</span></h1>
+<header>
+    <div class="top-bar">
+        <div class="logo">GASTRO<br><span>GOLD</span></div>
+        <div style="display: flex; gap: 5px; background: var(--card-bg); padding: 4px; border-radius: 10px;">
+            <button class="cat-btn" style="padding: 6px 10px;" id="lang-ru" onclick="changeLang('ru')">RU</button>
+            <button class="cat-btn" style="padding: 6px 10px;" id="lang-az" onclick="changeLang('az')">AZ</button>
         </div>
-        <div class="lang-switch">
-            <button class="lang-btn active" id="btn-ru" onclick="setLang('ru')">RU</button>
-            <button class="lang-btn" id="btn-az" onclick="setLang('az')">AZ</button>
-        </div>
-    </header>
-
-    <div class="categories" id="cat-list">
-        <button class="cat-btn active" onclick="filterMenu('all')" id="cat-all">Все</button>
-        <button class="cat-btn" onclick="filterMenu('burger')" id="cat-burger">Бургеры</button>
-        <button class="cat-btn" onclick="filterMenu('pizza')" id="cat-pizza">Пицца</button>
-        <button class="cat-btn" onclick="filterMenu('sushi')" id="cat-sushi">Суши</button>
     </div>
+    <div class="search-container">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="search-input" placeholder="Поиск блюд..." oninput="handleSearch()">
+    </div>
+</header>
 
-    <div id="menu-stack"></div>
+<div class="categories" id="cat-scroll">
+    <!-- Генерируется через JS -->
+</div>
 
-    <div class="form-card" id="order-form">
-        <h4 id="label-order">Оформление</h4>
-        <input type="text" id="name-input" placeholder="Имя">
-        <input type="tel" id="p-input" placeholder="+994 (__) ___-__-__">
-        <input type="text" id="a-input" placeholder="Адрес доставки">
-        
-        <a href="https://maps.google.com/?q=40.3771,49.8517" target="_blank" class="nav-btn">
-            <div>
-                <span class="nav-label" id="label-loc">Локация</span>
-                <span class="nav-addr" id="label-addr">Баку, пр-т Нефтяников 153</span>
-            </div>
-            <div class="nav-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-            </div>
-        </a>
+<div class="content">
+    <div class="grid" id="product-grid">
+        <!-- Генерируется через JS -->
     </div>
 </div>
 
-<div class="floating-cart" id="main-cart">
-    <div style="color:#000">
-        <span style="font-size:9px; font-weight:900; text-transform:uppercase; display:block; opacity:0.6;" id="label-total">ИТОГО</span>
-        <b id="final-sum" style="font-size:20px">0.00 ₼</b>
+<!-- Bottom Bar -->
+<div class="cart-bar" id="cart-bar" onclick="openDrawer()">
+    <div class="cart-info">
+        <span id="txt-items-count">0 ТОВАРОВ</span>
+        <b id="txt-total-price">0.00 ₼</b>
     </div>
-    <button class="order-trigger" onclick="sendOrder()" id="label-btnOrder">ЗАКАЗАТЬ</button>
+    <button class="checkout-btn" id="txt-order-btn">ОФОРМИТЬ</button>
 </div>
 
-<div id="done-screen">
-    <div style="font-size:60px; color:var(--accent); margin-bottom:20px;">✓</div>
-    <h2 id="label-success">ПРИНЯТО!</h2>
-    <p id="label-successSub" style="color:var(--text-dim); line-height:1.5;">Ваш заказ отправлен. Мы свяжемся с вами в ближайшее время.</p>
-    <button onclick="location.reload()" style="background:transparent; border:1px solid #333; color:#fff; padding:12px 30px; border-radius:12px; margin-top:30px; font-size:12px; font-weight:700;">НАЗАД</button>
+<!-- Drawer -->
+<div id="cart-drawer">
+    <div class="drawer-header">
+        <h2 class="unbounded" id="txt-cart-title">КОРЗИНА</h2>
+        <button class="close-draw" onclick="closeDrawer()">✕</button>
+    </div>
+    
+    <div class="order-items" id="drawer-items"></div>
+
+    <div class="form-group">
+        <input type="text" class="modern" id="f-name" placeholder="Ваше имя">
+        <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__">
+        <input type="text" class="modern" id="f-addr" placeholder="Адрес доставки">
+    </div>
+
+    <button class="checkout-btn" style="width: 100%; height: 60px; margin-top: 10px; background: var(--accent-grad); color: #000;" onclick="submitOrder()">
+        ПОДТВЕРДИТЬ ЗАКАЗ
+    </button>
+</div>
+
+<div id="success-page">
+    <div style="font-size: 80px;">🏆</div>
+    <h2 class="unbounded" style="color: var(--accent);">ГОТОВО!</h2>
+    <p id="txt-success-msg">Ваш заказ принят в работу. Ожидайте звонка.</p>
+    <button class="checkout-btn" style="margin-top: 20px;" onclick="location.reload()">В МЕНЮ</button>
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
-let currentLang = 'ru';
-let currentCat = 'all';
-let state = {};
+tg.expand();
+tg.enableClosingConfirmation();
+
+let lang = 'ru';
+let cart = {};
+let searchQuery = '';
+let activeCat = 'all';
 
 const products = [
-    { id: 1, cat: 'burger', price: 25.5, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300", ru: {n: "Империал Бургер", d: "Мраморная говядина, трюфель"}, az: {n: "İmperial Burqer", d: "Mərmər mal əti, trüfel"} },
-    { id: 2, cat: 'pizza', price: 18.0, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300", ru: {n: "Пицца Черная", d: "Чернила каракатицы, морепродукты"}, az: {n: "Qara Pizza", d: "Mürəkkəbbalığı mürəkkəbi, dəniz məhsulları"} },
-    { id: 3, cat: 'sushi', price: 32.0, img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=300", ru: {n: "Суши Платинум", d: "Тунец Торо, икра"}, az: {n: "Platin Suşi", d: "Tuna Toro, kürü"} }
+    { id: 1, cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
+    { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль, соус карри"}, az: {n: "Çiken Lüks", d: "Toyuq qril, karri sousu"} },
+    { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита Голд", d: "Томаты, моцарелла"}, az: {n: "Marqarita Qold", d: "Pomidor, mosarella"} },
+    { id: 4, cat: 'pizza', price: 22.5, img: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
+    { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков, микс"}, az: {n: "Bakı Seti", d: "48 tikə, miks"} },
+    { id: 6, cat: 'drinks', price: 4.0, img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400', ru: {n: "Домашний Лимонад", d: "Цитрус и мята"}, az: {n: "Ev Limonadı", d: "Sitrus və nanə"} }
 ];
 
-const i18n = {
-    ru: { order: "Оформление", total: "Итого", btnOrder: "Заказать", success: "ПРИНЯТО!", successSub: "Мы свяжемся с вами в ближайшее время.", add: "Добавить", name: "Имя", addr: "Адрес доставки", loc: "Локация", addrVal: "Баку, пр-т Нефтяников 153", all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" },
-    az: { order: "Rəsmiləşdirmə", total: "Cəmi", btnOrder: "Sifariş et", success: "QƏBUL EDİLDİ!", successSub: "Tezliklə sizinlə əlaqə saxlayacağıq.", add: "Əlavə et", name: "Ad", addr: "Çatdırılma ünvanı", loc: "Məkan", addrVal: "Bakı, Neftçilər pr. 153", all: "Hamısı", burger: "Burqerlər", pizza: "Pizza", sushi: "Suşi" }
+const categories = {
+    all: { ru: "Все", az: "Hamısı" },
+    burger: { ru: "Бургеры", az: "Burqerlər" },
+    pizza: { ru: "Пицца", az: "Pizza" },
+    sushi: { ru: "Суши", az: "Suşi" },
+    drinks: { ru: "Напитки", az: "İçkilər" }
 };
 
-function setLang(lang) {
-    currentLang = lang;
-    document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
-    document.getElementById('btn-az').classList.toggle('active', lang === 'az');
+const i18n = {
+    ru: { search: "Поиск блюд...", items: "товаров", order: "ОФОРМИТЬ", cart: "КОРЗИНА", name: "Ваше имя", phone: "Телефон", addr: "Адрес доставки", success: "Ваш заказ принят! Ожидайте звонка.", confirm: "ПОДТВЕРДИТЬ" },
+    az: { search: "Axtarış...", items: "məhsul", order: "SİFARİŞ ET", cart: "SƏBƏT", name: "Adınız", phone: "Telefon", addr: "Çatdırılma ünvanı", success: "Sifarişiniz qəbul edildi!", confirm: "TƏSDİQLƏ" }
+};
+
+function changeLang(l) {
+    lang = l;
+    document.querySelectorAll('[id^="lang-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('lang-' + l).classList.add('active');
     
-    document.getElementById('label-order').innerText = i18n[lang].order;
-    document.getElementById('label-total').innerText = i18n[lang].total;
-    document.getElementById('label-btnOrder').innerText = i18n[lang].btnOrder;
-    document.getElementById('label-success').innerText = i18n[lang].success;
-    document.getElementById('label-successSub').innerText = i18n[lang].successSub;
-    document.getElementById('name-input').placeholder = i18n[lang].name;
-    document.getElementById('a-input').placeholder = i18n[lang].addr;
-    document.getElementById('label-loc').innerText = i18n[lang].loc;
-    document.getElementById('label-addr').innerText = i18n[lang].addrVal;
+    document.getElementById('search-input').placeholder = i18n[lang].search;
+    document.getElementById('txt-order-btn').innerText = i18n[lang].order;
+    document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
+    document.getElementById('f-name').placeholder = i18n[lang].name;
+    document.getElementById('f-addr').placeholder = i18n[lang].addr;
     
-    document.getElementById('cat-all').innerText = i18n[lang].all;
-    document.getElementById('cat-burger').innerText = i18n[lang].burger;
-    document.getElementById('cat-pizza').innerText = i18n[lang].pizza;
-    document.getElementById('cat-sushi').innerText = i18n[lang].sushi;
-    
-    updateUI();
+    renderCategories();
+    renderProducts();
+    updateCartBar();
 }
 
-function filterMenu(cat) {
-    currentCat = cat;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    tg.HapticFeedback?.impactOccurred('light');
-    updateUI();
+function renderCategories() {
+    const container = document.getElementById('cat-scroll');
+    container.innerHTML = Object.keys(categories).map(key => `
+        <button class="cat-btn ${activeCat === key ? 'active' : ''}" onclick="setCategory('${key}')">
+            ${categories[key][lang]}
+        </button>
+    `).join('');
 }
 
-function updateUI() {
-    const list = document.getElementById('menu-stack');
-    const filtered = products.filter(p => currentCat === 'all' || p.cat === currentCat);
-    
-    list.innerHTML = filtered.map(p => {
-        const q = state[p.id] || 0;
-        const t = p[currentLang];
+function setCategory(c) {
+    activeCat = c;
+    tg.HapticFeedback.impactOccurred('light');
+    renderCategories();
+    renderProducts();
+}
+
+function handleSearch() {
+    searchQuery = document.getElementById('search-input').value.toLowerCase();
+    renderProducts();
+}
+
+function renderProducts() {
+    const grid = document.getElementById('product-grid');
+    const filtered = products.filter(p => {
+        const matchesCat = activeCat === 'all' || p.cat === activeCat;
+        const matchesSearch = p[lang].n.toLowerCase().includes(searchQuery);
+        return matchesCat && matchesSearch;
+    });
+
+    grid.innerHTML = filtered.map(p => {
+        const count = cart[p.id] || 0;
         return `
-            <div class="product-row" style="animation: fadeIn 0.3s ease;">
-                <img src="${p.img}" class="product-img" id="img-${p.id}">
-                <div class="product-info">
-                    <h3>${t.n}</h3>
-                    <p>${t.d}</p>
+            <div class="product-card">
+                ${count > 0 ? `<div class="badge">${count}</div>` : ''}
+                <img src="${p.img}" class="product-img">
+                <h3 class="unbounded">${p[lang].n}</h3>
+                <p>${p[lang].d}</p>
+                <div class="product-footer">
                     <div class="price">${p.price.toFixed(2)} ₼</div>
-                </div>
-                <div style="text-align:right;">
-                    ${q > 0 ? `
-                        <div class="counter-pill">
-                            <button class="circle-btn" onclick="act(${p.id},-1)">−</button>
-                            <span style="min-width:20px; text-align:center; font-weight:700;">${q}</span>
-                            <button class="circle-btn" onclick="act(${p.id},1, event)">+</button>
+                    ${count > 0 ? `
+                        <div class="counter-box">
+                            <button class="count-btn" onclick="updateCount(${p.id}, -1)">-</button>
+                            <span style="font-weight:800; font-size:14px;">${count}</span>
+                            <button class="count-btn" onclick="updateCount(${p.id}, 1)">+</button>
                         </div>
                     ` : `
-                        <button class="add-pill" onclick="act(${p.id},1, event)">${i18n[currentLang].add}</button>
+                        <button class="add-btn" onclick="updateCount(${p.id}, 1)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                     `}
                 </div>
-            </div>`;
+            </div>
+        `;
     }).join('');
+}
 
-    let total = 0;
-    Object.entries(state).forEach(([id, q]) => {
+function updateCount(id, delta) {
+    cart[id] = (cart[id] || 0) + delta;
+    if (cart[id] <= 0) delete cart[id];
+    
+    tg.HapticFeedback.selectionChanged();
+    renderProducts();
+    updateCartBar();
+}
+
+function updateCartBar() {
+    const bar = document.getElementById('cart-bar');
+    const countTxt = document.getElementById('txt-items-count');
+    const priceTxt = document.getElementById('txt-total-price');
+    
+    const itemsArray = Object.entries(cart);
+    const totalCount = itemsArray.reduce((sum, [id, q]) => sum + q, 0);
+    const totalPrice = itemsArray.reduce((sum, [id, q]) => {
         const p = products.find(x => x.id == id);
-        if(p) total += p.price * q;
-    });
+        return sum + (p.price * q);
+    }, 0);
+
+    if (totalCount > 0) {
+        bar.classList.add('active');
+        countTxt.innerText = `${totalCount} ${i18n[lang].items}`;
+        priceTxt.innerText = `${totalPrice.toFixed(2)} ₼`;
+    } else {
+        bar.classList.remove('active');
+    }
+}
+
+function openDrawer() {
+    const drawer = document.getElementById('cart-drawer');
+    const itemsCont = document.getElementById('drawer-items');
+    drawer.style.display = 'flex';
     
-    document.getElementById('final-sum').innerText = total.toFixed(2) + ' ₼';
-    document.getElementById('main-cart').classList.toggle('active', total > 0);
-}
-
-function flyToCart(imgId) {
-    const imgElement = document.getElementById(imgId);
-    const cart = document.getElementById('main-cart');
-    if (!imgElement || !cart) return;
-
-    const clone = imgElement.cloneNode();
-    clone.classList.add('flying-item');
-    const rect = imgElement.getBoundingClientRect();
-    clone.style.left = rect.left + 'px';
-    clone.style.top = rect.top + 'px';
-    document.body.appendChild(clone);
-
-    const cartRect = cart.getBoundingClientRect();
-    requestAnimationFrame(() => {
-        clone.style.left = (cartRect.left + 50) + 'px';
-        clone.style.top = (cartRect.top) + 'px';
-        clone.style.transform = 'scale(0.1) rotate(15deg)';
-        clone.style.opacity = '0';
-    });
-
-    clone.addEventListener('transitionend', () => {
-        clone.remove();
-        cart.classList.add('bounce');
-        setTimeout(() => cart.classList.remove('bounce'), 400);
-    });
-}
-
-function act(id, delta, event) {
-    if (delta > 0 && event) flyToCart('img-' + id);
-    state[id] = (state[id] || 0) + delta;
-    if (state[id] <= 0) delete state[id];
-    tg.HapticFeedback?.selectionChanged();
-    updateUI();
-}
-
-function sendOrder() {
-    const name = document.getElementById('name-input');
-    const phone = document.getElementById('p-input');
-    const addr = document.getElementById('a-input');
+    const itemsHtml = Object.entries(cart).map(([id, q]) => {
+        const p = products.find(x => x.id == id);
+        return `
+            <div class="order-item">
+                <div>
+                    <div style="font-weight:800;">${p[lang].n}</div>
+                    <div style="font-size:12px; color:var(--text-dim);">${q} x ${p.price} ₼</div>
+                </div>
+                <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
+            </div>
+        `;
+    }).join('');
     
-    let hasError = false;
-    [name, phone, addr].forEach(el => {
-        if (!el.value.trim()) { el.classList.add('invalid'); hasError = true; }
-        else el.classList.remove('invalid');
-    });
+    itemsCont.innerHTML = itemsHtml || '<p style="text-align:center; opacity:0.5;">Корзина пуста</p>';
+}
 
-    if (hasError) {
-        tg.HapticFeedback?.notificationOccurred('error');
+function closeDrawer() {
+    document.getElementById('cart-drawer').style.display = 'none';
+}
+
+function submitOrder() {
+    const name = document.getElementById('f-name').value;
+    const phone = document.getElementById('f-phone').value;
+    const addr = document.getElementById('f-addr').value;
+
+    if (!name || !phone || !addr) {
+        tg.HapticFeedback.notificationOccurred('error');
+        alert('Пожалуйста, заполните все поля');
         return;
     }
 
     const orderData = {
-        name: name.value,
-        phone: phone.value,
-        address: addr.value,
-        items: Object.entries(state).map(([id, q]) => ({
-            name: products.find(p => p.id == id)[currentLang].n,
-            quantity: q
+        customer: { name, phone, addr },
+        items: Object.entries(cart).map(([id, q]) => ({
+            name: products.find(x => x.id == id)[lang].n,
+            qty: q
         })),
-        total: document.getElementById('final-sum').innerText
+        total: document.getElementById('txt-total-price').innerText
     };
 
+    // Отправка данных в бота
     tg.sendData(JSON.stringify(orderData));
-    document.getElementById('done-screen').style.display = 'flex';
-    tg.HapticFeedback?.notificationOccurred('success');
+    
+    // Показ экрана успеха
+    document.getElementById('success-page').style.display = 'flex';
+    tg.HapticFeedback.notificationOccurred('success');
 }
 
-document.getElementById('p-input').addEventListener('input', e => {
-    let v = e.target.value.replace(/\D/g,'');
-    if (v.startsWith('994')) v = v.slice(3);
-    let res = '+994 ';
-    if (v) res += '(' + v.slice(0,2);
-    if (v.length >= 3) res += ') ' + v.slice(2,5);
-    if (v.length >= 6) res += '-' + v.slice(5,7);
-    if (v.length >= 8) res += '-' + v.slice(7,9);
-    e.target.value = res;
-});
-
-tg.ready();
-tg.expand();
-setLang('ru');
+// Инициализация
+changeLang('ru');
 </script>
+
 </body>
 </html>
