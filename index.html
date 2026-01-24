@@ -26,20 +26,31 @@
             min-height: 100vh;
         }
         .container { padding: 20px 20px 280px; max-width: 500px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         h1 { font-size: 32px; font-weight: 900; margin: 0; line-height: 1; letter-spacing: -1px; }
+        
         .lang-switch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 4px; display: flex; gap: 4px; }
         .lang-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-dim); font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .lang-btn.active { background: var(--accent); color: #000; }
         
+        /* Меню категорий */
+        .categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 20px; margin-bottom: 10px; scrollbar-width: none; }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-btn { 
+            padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); 
+            background: transparent; color: var(--text-dim); font-size: 10px; font-weight: 700; 
+            white-space: nowrap; text-transform: uppercase; cursor: pointer; transition: 0.3s;
+        }
+        .cat-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255, 210, 0, 0.05); }
+
         .product-row { display: flex; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border); align-items: center; }
         .product-img { width: 90px; height: 90px; border-radius: 18px; object-fit: cover; background: #222; border: 1px solid var(--border); }
         .product-info { flex: 1; }
-        .product-info h3 { margin: 0 0 5px; font-size: 15px; font-weight: 700; }
+        .product-info h3 { margin: 0 0 5px; font-size: 14px; font-weight: 700; }
         .product-info p { margin: 0; font-size: 10px; color: var(--text-dim); line-height: 1.4; }
         .price { font-weight: 900; color: var(--accent); font-size: 14px; margin-top: 5px; }
         
-        .add-pill { background: #fff; color: #000; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 8px; }
+        .add-pill { background: #fff; color: #000; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 8px; text-transform: uppercase; }
         .counter-pill { display: flex; align-items: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 4px; margin-top: 8px; }
         .circle-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--accent); color: #000; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
@@ -49,12 +60,25 @@
         input:focus { border-color: var(--accent); }
         input.invalid { border-color: var(--error); }
 
+        /* Кнопка навигации - исправление синего цвета */
+        .nav-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            padding: 16px; border-radius: 18px; text-decoration: none; margin-top: 15px;
+            transition: 0.2s;
+        }
+        .nav-btn:active { background: rgba(255,255,255,0.08); transform: scale(0.98); }
+        .nav-btn span { color: #ffffff !important; text-decoration: none !important; }
+        .nav-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
+        .nav-addr { font-size: 12px; font-weight: 400; }
+        .nav-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #000; }
+
         .floating-cart { position: fixed; bottom: 20px; left: 16px; right: 16px; background: #fff; border-radius: 24px; padding: 12px 12px 12px 24px; display: none; justify-content: space-between; align-items: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6); z-index: 1000; }
         .floating-cart.active { display: flex; }
         .order-trigger { background: #000; color: #fff; border: none; padding: 14px 28px; border-radius: 18px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
         
         #done-screen { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; text-align: center; padding: 30px; }
-        .flying-item { position: fixed; z-index: 5000; width: 60px; height: 60px; border-radius: 12px; pointer-events: none; transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .flying-item { position: fixed; z-index: 5000; width: 60px; height: 60px; border-radius: 12px; pointer-events: none; transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); border: 1px solid var(--accent); }
         
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         .bounce { animation: bounce 0.4s ease; }
@@ -73,6 +97,13 @@
         </div>
     </header>
 
+    <div class="categories" id="cat-list">
+        <button class="cat-btn active" onclick="filterMenu('all')" id="cat-all">Все</button>
+        <button class="cat-btn" onclick="filterMenu('burger')" id="cat-burger">Бургеры</button>
+        <button class="cat-btn" onclick="filterMenu('pizza')" id="cat-pizza">Пицца</button>
+        <button class="cat-btn" onclick="filterMenu('sushi')" id="cat-sushi">Суши</button>
+    </div>
+
     <div id="menu-stack"></div>
 
     <div class="form-card" id="order-form">
@@ -80,6 +111,16 @@
         <input type="text" id="name-input" placeholder="Имя">
         <input type="tel" id="p-input" placeholder="+994 (__) ___-__-__">
         <input type="text" id="a-input" placeholder="Адрес доставки">
+        
+        <a href="https://maps.google.com/?q=40.3771,49.8517" target="_blank" class="nav-btn">
+            <div>
+                <span class="nav-label" id="label-loc">Локация</span>
+                <span class="nav-addr" id="label-addr">Баку, пр-т Нефтяников 153</span>
+            </div>
+            <div class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+            </div>
+        </a>
     </div>
 </div>
 
@@ -101,17 +142,18 @@
 <script>
 const tg = window.Telegram.WebApp;
 let currentLang = 'ru';
+let currentCat = 'all';
 let state = {};
 
 const products = [
-    { id: 1, price: 25.5, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300", ru: {n: "Империал Бургер", d: "Мраморная говядина, трюфель"}, az: {n: "İmperial Burqer", d: "Mərmər mal əti, trüfel"} },
-    { id: 2, price: 18.0, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300", ru: {n: "Пицца Черная", d: "Чернила каракатицы, морепродукты"}, az: {n: "Qara Pizza", d: "Mürəkkəbbalığı mürəkkəbi, dəniz məhsulları"} },
-    { id: 3, price: 32.0, img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=300", ru: {n: "Суши Платинум", d: "Тунец Торо, икра"}, az: {n: "Platin Suşi", d: "Tuna Toro, kürü"} }
+    { id: 1, cat: 'burger', price: 25.5, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300", ru: {n: "Империал Бургер", d: "Мраморная говядина, трюфель"}, az: {n: "İmperial Burqer", d: "Mərmər mal əti, trüfel"} },
+    { id: 2, cat: 'pizza', price: 18.0, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300", ru: {n: "Пицца Черная", d: "Чернила каракатицы, морепродукты"}, az: {n: "Qara Pizza", d: "Mürəkkəbbalığı mürəkkəbi, dəniz məhsulları"} },
+    { id: 3, cat: 'sushi', price: 32.0, img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=300", ru: {n: "Суши Платинум", d: "Тунец Торо, икра"}, az: {n: "Platin Suşi", d: "Tuna Toro, kürü"} }
 ];
 
 const i18n = {
-    ru: { order: "Оформление", total: "Итого", btnOrder: "Заказать", success: "ПРИНЯТО!", successSub: "Мы свяжемся с вами в ближайшее время.", add: "Добавить", name: "Имя", addr: "Адрес доставки" },
-    az: { order: "Rəsmiləşdirmə", total: "Cəmi", btnOrder: "Sifariş et", success: "QƏBUL EDİLDİ!", successSub: "Tezliklə sizinlə əlaqə saxlayacağıq.", add: "Əlavə et", name: "Ad", addr: "Çatdırılma ünvanı" }
+    ru: { order: "Оформление", total: "Итого", btnOrder: "Заказать", success: "ПРИНЯТО!", successSub: "Мы свяжемся с вами в ближайшее время.", add: "Добавить", name: "Имя", addr: "Адрес доставки", loc: "Локация", addrVal: "Баку, пр-т Нефтяников 153", all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" },
+    az: { order: "Rəsmiləşdirmə", total: "Cəmi", btnOrder: "Sifariş et", success: "QƏBUL EDİLDİ!", successSub: "Tezliklə sizinlə əlaqə saxlayacağıq.", add: "Əlavə et", name: "Ad", addr: "Çatdırılma ünvanı", loc: "Məkan", addrVal: "Bakı, Neftçilər pr. 153", all: "Hamısı", burger: "Burqerlər", pizza: "Pizza", sushi: "Suşi" }
 };
 
 function setLang(lang) {
@@ -126,17 +168,34 @@ function setLang(lang) {
     document.getElementById('label-successSub').innerText = i18n[lang].successSub;
     document.getElementById('name-input').placeholder = i18n[lang].name;
     document.getElementById('a-input').placeholder = i18n[lang].addr;
+    document.getElementById('label-loc').innerText = i18n[lang].loc;
+    document.getElementById('label-addr').innerText = i18n[lang].addrVal;
     
+    document.getElementById('cat-all').innerText = i18n[lang].all;
+    document.getElementById('cat-burger').innerText = i18n[lang].burger;
+    document.getElementById('cat-pizza').innerText = i18n[lang].pizza;
+    document.getElementById('cat-sushi').innerText = i18n[lang].sushi;
+    
+    updateUI();
+}
+
+function filterMenu(cat) {
+    currentCat = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    tg.HapticFeedback?.impactOccurred('light');
     updateUI();
 }
 
 function updateUI() {
     const list = document.getElementById('menu-stack');
-    list.innerHTML = products.map(p => {
+    const filtered = products.filter(p => currentCat === 'all' || p.cat === currentCat);
+    
+    list.innerHTML = filtered.map(p => {
         const q = state[p.id] || 0;
         const t = p[currentLang];
         return `
-            <div class="product-row">
+            <div class="product-row" style="animation: fadeIn 0.3s ease;">
                 <img src="${p.img}" class="product-img" id="img-${p.id}">
                 <div class="product-info">
                     <h3>${t.n}</h3>
@@ -159,7 +218,8 @@ function updateUI() {
 
     let total = 0;
     Object.entries(state).forEach(([id, q]) => {
-        total += products.find(p => p.id == id).price * q;
+        const p = products.find(x => x.id == id);
+        if(p) total += p.price * q;
     });
     
     document.getElementById('final-sum').innerText = total.toFixed(2) + ' ₼';
