@@ -16,11 +16,14 @@
             --text: #ffffff;
             --text-dim: #999999;
             --border: rgba(255, 255, 255, 0.06);
-            --error: #ff4d4d;
             --safe-area-bottom: env(safe-area-inset-bottom);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
         
         body {
             font-family: 'Manrope', sans-serif;
@@ -34,14 +37,15 @@
 
         h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
 
-        /* --- Header & Search --- */
+        /* --- Header --- */
         header {
             padding: 20px 20px 10px;
             position: sticky;
             top: 0;
-            background: rgba(12, 12, 12, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(12, 12, 12, 0.85);
+            backdrop-filter: blur(15px);
             z-index: 100;
+            border-bottom: 1px solid var(--border);
         }
 
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -55,7 +59,6 @@
             display: flex;
             align-items: center;
             border: 1px solid var(--border);
-            margin-bottom: 10px;
         }
         .search-container input {
             background: transparent;
@@ -72,7 +75,7 @@
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding: 10px 20px;
+            padding: 15px 20px;
             scrollbar-width: none;
         }
         .categories::-webkit-scrollbar { display: none; }
@@ -85,17 +88,17 @@
             font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
-            transition: 0.3s;
+            cursor: pointer;
         }
         .cat-btn.active {
             background: var(--accent-grad);
             color: #000;
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(255, 210, 0, 0.2);
+            transform: scale(1.05);
         }
 
-        /* --- Product Grid --- */
-        .content { padding: 10px 16px 150px; }
+        /* --- Grid --- */
+        .content { padding: 10px 16px 50px; }
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -110,8 +113,14 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            animation: fadeIn 0.4s ease;
+            animation: fadeIn 0.6s ease backwards;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .product-img {
             width: 100%;
             aspect-ratio: 1;
@@ -119,9 +128,9 @@
             object-fit: cover;
             margin-bottom: 10px;
         }
-        .product-card h3 { font-size: 14px; margin: 5px 0; line-height: 1.2; height: 34px; overflow: hidden; }
+        .product-card h3 { font-size: 14px; margin: 5px 0; height: 34px; overflow: hidden; }
         .product-card p { font-size: 11px; color: var(--text-dim); margin: 0 0 10px; height: 30px; overflow: hidden; }
-        .product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        
         .price { font-weight: 800; font-size: 15px; color: var(--accent); }
 
         .add-btn {
@@ -134,61 +143,86 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: 0.2s;
-        }
-        .add-btn:active { transform: scale(0.9); }
-
-        .counter-box {
-            display: flex;
-            align-items: center;
-            background: #222;
-            border-radius: 10px;
-            padding: 4px;
-            gap: 8px;
-        }
-        .count-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            border: none;
-            background: var(--accent);
-            color: #000;
-            font-weight: bold;
         }
 
-        /* --- Floating Cart Bar --- */
+        /* --- Cart Bar --- */
         .cart-bar {
             position: fixed;
-            bottom: 20px;
+            bottom: 25px;
             left: 16px;
             right: 16px;
             background: #fff;
             height: 64px;
-            border-radius: 20px;
+            border-radius: 22px;
             display: none;
             align-items: center;
             padding: 0 8px 0 20px;
             justify-content: space-between;
             z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            cursor: pointer;
         }
-        .cart-bar.active { display: flex; animation: slideUp 0.3s ease; }
+        .cart-bar.active { display: flex; animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes slideIn {
+            from { transform: translateY(150%) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes cartBump {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.1) translateY(-8px); }
+            70% { transform: scale(0.95) translateY(2px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        .bump { animation: cartBump 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+
         .cart-info { color: #000; }
-        .cart-info span { display: block; font-size: 10px; font-weight: 700; opacity: 0.6; text-transform: uppercase; }
         .cart-info b { font-size: 18px; font-family: 'Unbounded'; }
+        
         .checkout-btn {
             background: #000;
             color: #fff;
             height: 48px;
             padding: 0 25px;
-            border-radius: 14px;
+            border-radius: 16px;
             border: none;
             font-family: 'Unbounded';
             font-size: 12px;
             font-weight: 700;
+            cursor: pointer;
         }
 
-        /* --- Cart Drawer (Full Screen Modal) --- */
+        /* --- Fly Effect --- */
+        .fly-item {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: all 0.9s cubic-bezier(0.42, 0, 0.15, 1);
+            box-shadow: 0 8px 25px rgba(255, 210, 0, 0.6);
+            filter: brightness(1.2);
+        }
+
+        /* --- Footer Address --- */
+        .footer-info {
+            padding: 40px 20px 140px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+        .addr-box {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            display: inline-block;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* --- Drawer --- */
         #cart-drawer {
             position: fixed;
             inset: 0;
@@ -197,42 +231,27 @@
             display: none;
             flex-direction: column;
             padding: 20px;
-            padding-bottom: calc(20px + var(--safe-area-bottom));
+            animation: drawerUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-draw { background: var(--card-bg); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; }
-        
-        .order-items { flex: 1; overflow-y: auto; }
-        .order-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border); }
 
-        .form-group { margin-top: 20px; }
+        @keyframes drawerUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
         input.modern {
             width: 100%;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 14px;
+            padding: 16px;
             color: #fff;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-family: inherit;
+            outline: none;
         }
-
-        /* --- Success Screen --- */
-        #success-page {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 3000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { transform: translateY(100px); } to { transform: translateY(0); } }
+        input.modern:focus { border-color: var(--accent); }
+        input.error { border-color: #ff4444 !important; }
 
         .badge {
             position: absolute;
@@ -240,10 +259,16 @@
             right: -5px;
             background: var(--accent);
             color: #000;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
@@ -252,158 +277,119 @@
 <header>
     <div class="top-bar">
         <div class="logo">GASTRO<br><span>GOLD</span></div>
-        <div style="display: flex; gap: 5px; background: var(--card-bg); padding: 4px; border-radius: 10px;">
-            <button class="cat-btn" style="padding: 6px 10px;" id="lang-ru" onclick="changeLang('ru')">RU</button>
-            <button class="cat-btn" style="padding: 6px 10px;" id="lang-az" onclick="changeLang('az')">AZ</button>
+        <div style="display: flex; gap: 5px; background: var(--card-bg); padding: 4px; border-radius: 12px;">
+            <button class="cat-btn" id="lang-ru" onclick="changeLang('ru')">RU</button>
+            <button class="cat-btn" id="lang-az" onclick="changeLang('az')">AZ</button>
         </div>
     </div>
     <div class="search-container">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="search-input" placeholder="Поиск блюд..." oninput="handleSearch()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="search-input" placeholder="Поиск..." oninput="handleSearch()">
     </div>
 </header>
 
-<div class="categories" id="cat-scroll">
-    <!-- Генерируется через JS -->
-</div>
+<div class="categories" id="cat-scroll"></div>
 
 <div class="content">
-    <div class="grid" id="product-grid">
-        <!-- Генерируется через JS -->
+    <div class="grid" id="product-grid"></div>
+</div>
+
+<div class="footer-info">
+    <div class="addr-box">
+        <h3 class="unbounded" style="font-size: 14px; margin: 0 0 10px; color: var(--accent);" id="txt-our-addr">НАШ АДРЕС</h3>
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Baku, Fountain Square, Nizami str. 12</p>
+        <button class="checkout-btn" style="width: 100%; height: 55px;" onclick="window.open('https://maps.google.com/?q=Gastro+Gold+Baku')">MAPS</button>
     </div>
 </div>
 
-<!-- Bottom Bar -->
 <div class="cart-bar" id="cart-bar" onclick="openDrawer()">
     <div class="cart-info">
-        <span id="txt-items-count">0 ТОВАРОВ</span>
+        <span id="txt-items-count" style="font-size: 10px; font-weight: 700; opacity: 0.6;">0 ТОВАРОВ</span><br>
         <b id="txt-total-price">0.00 ₼</b>
     </div>
     <button class="checkout-btn" id="txt-order-btn">ОФОРМИТЬ</button>
 </div>
 
-<!-- Drawer -->
 <div id="cart-drawer">
-    <div class="drawer-header">
-        <h2 class="unbounded" id="txt-cart-title">КОРЗИНА</h2>
-        <button class="close-draw" onclick="closeDrawer()">✕</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 class="unbounded" id="txt-cart-title" style="margin:0;">КОРЗИНА</h2>
+        <button onclick="closeDrawer()" style="background:var(--card-bg); border:none; color:#fff; width:44px; height:44px; border-radius:50%; font-size: 18px;">✕</button>
     </div>
-    
-    <div class="order-items" id="drawer-items"></div>
-
+    <div id="drawer-items" style="flex:1; overflow-y:auto; margin-bottom:20px;"></div>
     <div class="form-group">
-        <input type="text" class="modern" id="f-name" placeholder="Ваше имя">
+        <input type="text" class="modern" id="f-name" placeholder="Имя">
         <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__">
         <input type="text" class="modern" id="f-addr" placeholder="Адрес доставки">
     </div>
-
-    <button class="checkout-btn" style="width: 100%; height: 60px; margin-top: 10px; background: var(--accent-grad); color: #000;" onclick="submitOrder()">
-        ПОДТВЕРДИТЬ ЗАКАЗ
-    </button>
-</div>
-
-<div id="success-page">
-    <div style="font-size: 80px;">🏆</div>
-    <h2 class="unbounded" style="color: var(--accent);">ГОТОВО!</h2>
-    <p id="txt-success-msg">Ваш заказ принят в работу. Ожидайте звонка.</p>
-    <button class="checkout-btn" style="margin-top: 20px;" onclick="location.reload()">В МЕНЮ</button>
+    <button class="checkout-btn" id="confirm-btn" style="width:100%; height:64px; background:var(--accent-grad); color:#000; font-size: 14px;" onclick="submitOrder()">ПОДТВЕРДИТЬ</button>
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.enableClosingConfirmation();
 
 let lang = 'ru';
 let cart = {};
-let searchQuery = '';
 let activeCat = 'all';
 
 const products = [
     { id: 1, cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
-    { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль, соус карри"}, az: {n: "Çiken Lüks", d: "Toyuq qril, karri sousu"} },
-    { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита Голд", d: "Томаты, моцарелла"}, az: {n: "Marqarita Qold", d: "Pomidor, mosarella"} },
+    { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль"}, az: {n: "Çiken Lüks", d: "Toyuq qril"} },
+    { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Томаты, моцарелла"}, az: {n: "Marqarita", d: "Pomidor, mosarella"} },
     { id: 4, cat: 'pizza', price: 22.5, img: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
-    { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков, микс"}, az: {n: "Bakı Seti", d: "48 tikə, miks"} },
-    { id: 6, cat: 'drinks', price: 4.0, img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400', ru: {n: "Домашний Лимонад", d: "Цитрус и мята"}, az: {n: "Ev Limonadı", d: "Sitrus və nanə"} }
+    { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков"}, az: {n: "Bakı Seti", d: "48 tikə"} }
 ];
 
-const categories = {
-    all: { ru: "Все", az: "Hamısı" },
-    burger: { ru: "Бургеры", az: "Burqerlər" },
-    pizza: { ru: "Пицца", az: "Pizza" },
-    sushi: { ru: "Суши", az: "Suşi" },
-    drinks: { ru: "Напитки", az: "İçkilər" }
-};
+const cats = { all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" };
+const catsAz = { all: "Hamısı", burger: "Burqer", pizza: "Pizza", sushi: "Suşi" };
 
 const i18n = {
-    ru: { search: "Поиск блюд...", items: "товаров", order: "ОФОРМИТЬ", cart: "КОРЗИНА", name: "Ваше имя", phone: "Телефон", addr: "Адрес доставки", success: "Ваш заказ принят! Ожидайте звонка.", confirm: "ПОДТВЕРДИТЬ" },
-    az: { search: "Axtarış...", items: "məhsul", order: "SİFARİŞ ET", cart: "SƏBƏT", name: "Adınız", phone: "Telefon", addr: "Çatdırılma ünvanı", success: "Sifarişiniz qəbul edildi!", confirm: "TƏSDİQLƏ" }
+    ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", search: "Поиск блюд...", name: "Имя", addr_label: "Адрес", phone: "Телефон", our_addr: "НАШ АДРЕС" },
+    az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", search: "Axtarış...", name: "Ad", addr_label: "Ünvan", phone: "Telefon", our_addr: "ÜNVANIMIZ" }
 };
 
 function changeLang(l) {
     lang = l;
-    document.querySelectorAll('[id^="lang-"]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('lang-' + l).classList.add('active');
-    
     document.getElementById('search-input').placeholder = i18n[lang].search;
-    document.getElementById('txt-order-btn').innerText = i18n[lang].order;
     document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
-    document.getElementById('f-name').placeholder = i18n[lang].name;
-    document.getElementById('f-addr').placeholder = i18n[lang].addr;
-    
+    document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
+    document.getElementById('txt-our-addr').innerText = i18n[lang].our_addr;
     renderCategories();
     renderProducts();
     updateCartBar();
 }
 
 function renderCategories() {
-    const container = document.getElementById('cat-scroll');
-    container.innerHTML = Object.keys(categories).map(key => `
-        <button class="cat-btn ${activeCat === key ? 'active' : ''}" onclick="setCategory('${key}')">
-            ${categories[key][lang]}
-        </button>
+    const data = lang === 'ru' ? cats : catsAz;
+    document.getElementById('cat-scroll').innerHTML = Object.keys(data).map(k => `
+        <button class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${data[k]}</button>
     `).join('');
 }
 
-function setCategory(c) {
-    activeCat = c;
-    tg.HapticFeedback.impactOccurred('light');
-    renderCategories();
-    renderProducts();
-}
-
-function handleSearch() {
-    searchQuery = document.getElementById('search-input').value.toLowerCase();
-    renderProducts();
-}
+function setCat(k) { activeCat = k; renderCategories(); renderProducts(); }
 
 function renderProducts() {
-    const grid = document.getElementById('product-grid');
-    const filtered = products.filter(p => {
-        const matchesCat = activeCat === 'all' || p.cat === activeCat;
-        const matchesSearch = p[lang].n.toLowerCase().includes(searchQuery);
-        return matchesCat && matchesSearch;
-    });
-
-    grid.innerHTML = filtered.map(p => {
+    const filtered = products.filter(p => activeCat === 'all' || p.cat === activeCat);
+    document.getElementById('product-grid').innerHTML = filtered.map((p, index) => {
         const count = cart[p.id] || 0;
         return `
-            <div class="product-card">
+            <div class="product-card" id="prod-${p.id}" style="animation-delay: ${index * 0.05}s">
                 ${count > 0 ? `<div class="badge">${count}</div>` : ''}
-                <img src="${p.img}" class="product-img">
+                <img src="${p.img}" class="product-img" id="img-${p.id}">
                 <h3 class="unbounded">${p[lang].n}</h3>
                 <p>${p[lang].d}</p>
-                <div class="product-footer">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
                     <div class="price">${p.price.toFixed(2)} ₼</div>
                     ${count > 0 ? `
-                        <div class="counter-box">
-                            <button class="count-btn" onclick="updateCount(${p.id}, -1)">-</button>
-                            <span style="font-weight:800; font-size:14px;">${count}</span>
-                            <button class="count-btn" onclick="updateCount(${p.id}, 1)">+</button>
+                        <div style="display:flex; align-items:center; background:#222; border-radius:12px; padding:3px; gap:8px;">
+                            <button onclick="updateCount(${p.id},-1,event)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">-</button>
+                            <span style="font-weight:800;">${count}</span>
+                            <button onclick="updateCount(${p.id},1,event)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">+</button>
                         </div>
                     ` : `
-                        <button class="add-btn" onclick="updateCount(${p.id}, 1)">
+                        <button class="add-btn" onclick="updateCount(${p.id},1,event)">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                     `}
@@ -413,92 +399,120 @@ function renderProducts() {
     }).join('');
 }
 
+function animateFly(id) {
+    const img = document.getElementById(`img-${id}`);
+    const cartBar = document.getElementById('cart-bar');
+    if (!img || !cartBar) return;
+    const imgRect = img.getBoundingClientRect();
+    const cartRect = cartBar.getBoundingClientRect();
+    const flyer = img.cloneNode();
+    flyer.classList.add('fly-item');
+    flyer.style.top = imgRect.top + 'px';
+    flyer.style.left = imgRect.left + 'px';
+    flyer.style.width = imgRect.width + 'px';
+    flyer.style.height = imgRect.height + 'px';
+    document.body.appendChild(flyer);
+    requestAnimationFrame(() => {
+        flyer.style.top = (cartRect.top + 15) + 'px';
+        flyer.style.left = (cartRect.left + cartRect.width / 2 - 15) + 'px';
+        flyer.style.width = '30px';
+        flyer.style.height = '30px';
+        flyer.style.opacity = '0.4';
+        flyer.style.transform = 'rotate(720deg) scale(0.5)';
+    });
+    setTimeout(() => {
+        flyer.remove();
+        cartBar.classList.remove('bump');
+        void cartBar.offsetWidth; 
+        cartBar.classList.add('bump');
+    }, 900);
+}
+
 function updateCount(id, delta) {
+    if (delta > 0) animateFly(id);
     cart[id] = (cart[id] || 0) + delta;
     if (cart[id] <= 0) delete cart[id];
-    
-    tg.HapticFeedback.selectionChanged();
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     renderProducts();
     updateCartBar();
 }
 
 function updateCartBar() {
     const bar = document.getElementById('cart-bar');
-    const countTxt = document.getElementById('txt-items-count');
-    const priceTxt = document.getElementById('txt-total-price');
-    
-    const itemsArray = Object.entries(cart);
-    const totalCount = itemsArray.reduce((sum, [id, q]) => sum + q, 0);
-    const totalPrice = itemsArray.reduce((sum, [id, q]) => {
-        const p = products.find(x => x.id == id);
-        return sum + (p.price * q);
-    }, 0);
-
-    if (totalCount > 0) {
+    const items = Object.values(cart).reduce((a, b) => a + b, 0);
+    const total = Object.entries(cart).reduce((sum, [id, q]) => sum + (products.find(p => p.id == id).price * q), 0);
+    if (items > 0) {
+        bar.style.display = 'flex';
         bar.classList.add('active');
-        countTxt.innerText = `${totalCount} ${i18n[lang].items}`;
-        priceTxt.innerText = `${totalPrice.toFixed(2)} ₼`;
+        document.getElementById('txt-items-count').innerText = `${items} ${i18n[lang].items}`;
+        document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
     } else {
         bar.classList.remove('active');
+        setTimeout(() => { if (!Object.keys(cart).length) bar.style.display = 'none'; }, 400);
     }
 }
 
 function openDrawer() {
-    const drawer = document.getElementById('cart-drawer');
-    const itemsCont = document.getElementById('drawer-items');
-    drawer.style.display = 'flex';
-    
+    document.getElementById('cart-drawer').style.display = 'flex';
     const itemsHtml = Object.entries(cart).map(([id, q]) => {
         const p = products.find(x => x.id == id);
-        return `
-            <div class="order-item">
-                <div>
-                    <div style="font-weight:800;">${p[lang].n}</div>
-                    <div style="font-size:12px; color:var(--text-dim);">${q} x ${p.price} ₼</div>
-                </div>
-                <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
-            </div>
-        `;
+        return `<div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid var(--border);">
+            <div><b>${p[lang].n}</b><br><small>${q} x ${p.price} ₼</small></div>
+            <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
+        </div>`;
     }).join('');
-    
-    itemsCont.innerHTML = itemsHtml || '<p style="text-align:center; opacity:0.5;">Корзина пуста</p>';
+    document.getElementById('drawer-items').innerHTML = itemsHtml || '<p style="text-align:center;">Пусто</p>';
 }
 
-function closeDrawer() {
-    document.getElementById('cart-drawer').style.display = 'none';
+function closeDrawer() { document.getElementById('cart-drawer').style.display = 'none'; }
+
+function handleSearch() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    document.querySelectorAll('.product-card').forEach(c => {
+        c.style.display = c.querySelector('h3').innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+    });
 }
 
 function submitOrder() {
-    const name = document.getElementById('f-name').value;
-    const phone = document.getElementById('f-phone').value;
-    const addr = document.getElementById('f-addr').value;
+    const name = document.getElementById('f-name');
+    const phone = document.getElementById('f-phone');
+    const addr = document.getElementById('f-addr');
 
-    if (!name || !phone || !addr) {
-        tg.HapticFeedback.notificationOccurred('error');
-        alert('Пожалуйста, заполните все поля');
+    let hasError = false;
+    [name, phone, addr].forEach(el => {
+        if (!el.value.trim()) { el.classList.add('error'); hasError = true; }
+        else { el.classList.remove('error'); }
+    });
+
+    if (hasError) {
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         return;
     }
 
-    const orderData = {
-        customer: { name, phone, addr },
-        items: Object.entries(cart).map(([id, q]) => ({
-            name: products.find(x => x.id == id)[lang].n,
-            qty: q
-        })),
-        total: document.getElementById('txt-total-price').innerText
+    const orderItems = Object.entries(cart).map(([id, q]) => {
+        const p = products.find(x => x.id == id);
+        return { name: p.ru.n, quantity: q, price: p.price };
+    });
+
+    const total = orderItems.reduce((s, i) => s + (i.price * i.quantity), 0);
+
+    const data = {
+        customer: { name: name.value, phone: phone.value, address: addr.value },
+        items: orderItems,
+        total: total.toFixed(2)
     };
 
-    // Отправка данных в бота
-    tg.sendData(JSON.stringify(orderData));
-    
-    // Показ экрана успеха
-    document.getElementById('success-page').style.display = 'flex';
-    tg.HapticFeedback.notificationOccurred('success');
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    tg.sendData(JSON.stringify(data));
 }
 
-// Инициализация
+document.getElementById('f-phone').addEventListener('input', function (e) {
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+    if (!x[1]) { e.target.value = '+994 ('; return; }
+    e.target.value = !x[2] ? '+994 (' : '+994 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+});
+
 changeLang('ru');
 </script>
-
 </body>
 </html>
