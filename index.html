@@ -1,49 +1,192 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gastro Gold - Cloud Menu</title>
+    <title>Gastro Gold Azerbaijan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #0c0c0c; color: white; font-family: sans-serif; padding: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: #1a1a1a; padding: 10px; border-radius: 15px; border: 1px solid #333; }
-        .card img { width: 100%; border-radius: 10px; }
-        .price { color: #FFD700; font-weight: bold; }
+        :root {
+            --bg: #0c0c0c;
+            --card: #161616;
+            --accent: #FFD200;
+            --text: #ffffff;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Manrope', sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 50px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(to bottom, #1a1a1a, #0c0c0c);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .container {
+            padding: 0 15px;
+        }
+
+        .category-title {
+            font-size: 18px;
+            margin: 30px 0 15px 5px;
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+            padding-left: 10px;
+            text-transform: capitalize;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s;
+        }
+
+        .card:active {
+            transform: scale(0.96);
+        }
+
+        .card img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .card h3 {
+            margin: 5px 0;
+            font-size: 14px;
+            height: 40px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .price {
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 16px;
+        }
+
+        #loader {
+            text-align: center;
+            padding: 50px;
+            opacity: 0.5;
+        }
+
+        /* Адаптация для десктопа */
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            .container { max-width: 1000px; margin: 0 auto; }
+        }
     </style>
 </head>
 <body>
-    <h1>Меню из Облака</h1>
-    <div id="grid" class="grid">Загрузка данных из облака...</div>
+
+    <div class="header">
+        <h1>GASTRO GOLD</h1>
+        <p style="font-size: 12px; opacity: 0.6;">Premium Food Delivery</p>
+    </div>
+
+    <div class="container">
+        <div id="loader">Загрузка меню...</div>
+        <div id="menu-content"></div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gastro-gold-cloud';
+    // Пытаемся получить конфиг из окружения или используем пустой объект для предотвращения вылета
+    let firebaseConfig;
+    try {
+        firebaseConfig = JSON.parse(__firebase_config);
+    } catch (e) {
+        console.error("Config missing. This page should be viewed via the platform or with valid credentials.");
+    }
 
-    signInAnonymously(auth).then(() => {
-        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'menu'), (snap) => {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            snap.forEach(d => {
-                const p = d.data();
-                grid.innerHTML += `
-                    <div class="card">
-                        <img src="${p.img}">
-                        <h3>${p.ru.n}</h3>
-                        <div class="price">${p.price} ₼</div>
-                    </div>`;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gastro-gold-pro';
+
+    if (firebaseConfig) {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        signInAnonymously(auth).then(() => {
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'menu');
+            
+            onSnapshot(colRef, (snap) => {
+                const loader = document.getElementById('loader');
+                const content = document.getElementById('menu-content');
+                
+                if (snap.empty) {
+                    loader.innerText = "Меню временно пусто";
+                    return;
+                }
+
+                loader.style.display = 'none';
+                content.innerHTML = '';
+
+                // Группировка по категориям
+                const categories = {};
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    if (!categories[p.cat]) categories[p.cat] = [];
+                    categories[p.cat].push(p);
+                });
+
+                // Отрисовка
+                for (let cat in categories) {
+                    const catBlock = document.createElement('div');
+                    catBlock.innerHTML = `<h2 class="category-title">${cat}</h2>`;
+                    
+                    const grid = document.createElement('div');
+                    grid.className = 'grid';
+                    
+                    categories[cat].forEach(p => {
+                        grid.innerHTML += `
+                            <div class="card">
+                                <img src="${p.img}" onerror="this.src='https://via.placeholder.com/200?text=Food'">
+                                <h3>${p.ru.n}</h3>
+                                <div class="price">${p.price} ₼</div>
+                            </div>
+                        `;
+                    });
+                    
+                    catBlock.appendChild(grid);
+                    content.appendChild(catBlock);
+                }
             });
+        }).catch(err => {
+            document.getElementById('loader').innerText = "Ошибка доступа к базе данных";
         });
-    });
+    }
 </script>
 </body>
 </html>
+
 
