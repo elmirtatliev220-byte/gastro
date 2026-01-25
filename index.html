@@ -1,85 +1,518 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Gastro Gold Azerbaijan</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0c0c;
+            --card-bg: #161616;
+            --accent: #FFD200;
+            --accent-grad: linear-gradient(135deg, #FFD200 0%, #B89600 100%);
+            --text: #ffffff;
+            --text-dim: #999999;
+            --border: rgba(255, 255, 255, 0.06);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
 
-tg.sendData(JSON.stringify({
-    customer:{name:name.value,phone:phone.value,address:addr.value},
-    items,
-    total: total.toFixed(2)
-  }));
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
+        
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+        }
 
-  cart = {};
-  closeDrawer();
+        h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
+
+        /* --- Header --- */
+        header {
+            padding: 20px 20px 10px;
+            position: sticky;
+            top: 0;
+            background: rgba(12, 12, 12, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { font-size: 22px; font-weight: 900; line-height: 1; }
+        .logo span { color: var(--accent); }
+
+        .search-container {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+        .search-container input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            margin-left: 10px;
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        /* --- Categories --- */
+        .categories {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 15px 20px;
+            scrollbar-width: none;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            padding: 10px 18px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .cat-btn.active {
+            background: var(--accent-grad);
+            color: #000;
+            border-color: transparent;
+            transform: scale(1.05);
+        }
+
+        /* --- Grid --- */
+        .content { padding: 10px 16px 50px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            animation: fadeIn 0.6s ease backwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .product-img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 14px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .product-card h3 { font-size: 14px; margin: 5px 0; height: 34px; overflow: hidden; }
+        .product-card p { font-size: 11px; color: var(--text-dim); margin: 0 0 10px; height: 30px; overflow: hidden; }
+        
+        .price { font-weight: 800; font-size: 15px; color: var(--accent); }
+
+        .add-btn {
+            width: 36px;
+            height: 36px;
+            background: #fff;
+            border-radius: 10px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* --- Cart Bar --- */
+        .cart-bar {
+            position: fixed;
+            bottom: 25px;
+            left: 16px;
+            right: 16px;
+            background: #fff;
+            height: 64px;
+            border-radius: 22px;
+            display: none;
+            align-items: center;
+            padding: 0 8px 0 20px;
+            justify-content: space-between;
+            z-index: 1000;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            cursor: pointer;
+        }
+        .cart-bar.active { display: flex; animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes slideIn {
+            from { transform: translateY(150%) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes cartBump {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.1) translateY(-8px); }
+            70% { transform: scale(0.95) translateY(2px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        .bump { animation: cartBump 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+
+        .cart-info { color: #000; }
+        .cart-info b { font-size: 18px; font-family: 'Unbounded'; }
+        
+        .checkout-btn {
+            background: #000;
+            color: #fff;
+            height: 48px;
+            padding: 0 25px;
+            border-radius: 16px;
+            border: none;
+            font-family: 'Unbounded';
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* --- Fly Effect --- */
+        .fly-item {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: all 0.9s cubic-bezier(0.42, 0, 0.15, 1);
+            box-shadow: 0 8px 25px rgba(255, 210, 0, 0.6);
+            filter: brightness(1.2);
+        }
+
+        /* --- Footer Address --- */
+        .footer-info {
+            padding: 40px 20px 140px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+        .addr-box {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            display: inline-block;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* --- Drawer --- */
+        #cart-drawer {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            animation: drawerUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes drawerUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        input.modern {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            color: #fff;
+            margin-bottom: 12px;
+            font-family: inherit;
+            outline: none;
+        }
+        input.modern:focus { border-color: var(--accent); }
+        input.error { border-color: #ff4444 !important; }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent);
+            color: #000;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 8px;
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="top-bar">
+        <div class="logo">GASTRO<br><span>GOLD</span></div>
+        <div style="display: flex; gap: 5px; background: var(--card-bg); padding: 4px; border-radius: 12px;">
+            <button class="cat-btn" id="lang-ru" onclick="changeLang('ru')">RU</button>
+            <button class="cat-btn" id="lang-az" onclick="changeLang('az')">AZ</button>
+        </div>
+    </div>
+    <div class="search-container">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="search-input" placeholder="Поиск..." oninput="handleSearch()">
+    </div>
+</header>
+
+<div class="categories" id="cat-scroll"></div>
+
+<div class="content">
+    <div class="grid" id="product-grid"></div>
+</div>
+
+<div class="footer-info">
+    <div class="addr-box">
+        <h3 class="unbounded" style="font-size: 14px; margin: 0 0 10px; color: var(--accent);" id="txt-our-addr">НАШ АДРЕС</h3>
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Baku, Fountain Square, Nizami str. 12</p>
+        <button class="checkout-btn" style="width: 100%; height: 55px;" onclick="window.open('https://maps.google.com/?q=Gastro+Gold+Baku')">MAPS</button>
+    </div>
+</div>
+
+<div class="cart-bar" id="cart-bar" onclick="openDrawer()">
+    <div class="cart-info">
+        <span id="txt-items-count" style="font-size: 10px; font-weight: 700; opacity: 0.6;">0 ТОВАРОВ</span><br>
+        <b id="txt-total-price">0.00 ₼</b>
+    </div>
+    <button class="checkout-btn" id="txt-order-btn">ОФОРМИТЬ</button>
+</div>
+
+<div id="cart-drawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 class="unbounded" id="txt-cart-title" style="margin:0;">КОРЗИНА</h2>
+        <button onclick="closeDrawer()" style="background:var(--card-bg); border:none; color:#fff; width:44px; height:44px; border-radius:50%; font-size: 18px;">✕</button>
+    </div>
+    <div id="drawer-items" style="flex:1; overflow-y:auto; margin-bottom:20px;"></div>
+    <div class="form-group">
+        <input type="text" class="modern" id="f-name" placeholder="Имя">
+        <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__">
+        <input type="text" class="modern" id="f-addr" placeholder="Адрес доставки">
+    </div>
+    <button class="checkout-btn" id="confirm-btn" style="width:100%; height:64px; background:var(--accent-grad); color:#000; font-size: 14px;" onclick="submitOrder()">ПОДТВЕРДИТЬ</button>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+let lang = 'ru';
+let cart = {};
+let activeCat = 'all';
+
+const products = [
+    { id: 1, cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
+    { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль"}, az: {n: "Çiken Lüks", d: "Toyuq qril"} },
+    { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Томаты, моцарелла"}, az: {n: "Marqarita", d: "Pomidor, mosarella"} },
+    { id: 4, cat: 'pizza', price: 22.5, img: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
+    { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков"}, az: {n: "Bakı Seti", d: "48 tikə"} }
+];
+
+const cats = { all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" };
+const catsAz = { all: "Hamısı", burger: "Burqer", pizza: "Pizza", sushi: "Suşi" };
+
+const i18n = {
+    ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", search: "Поиск блюд...", name: "Имя", addr_label: "Адрес", phone: "Телефон", our_addr: "НАШ АДРЕС" },
+    az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", search: "Axtarış...", name: "Ad", addr_label: "Ünvan", phone: "Telefon", our_addr: "ÜNVANIMIZ" }
+};
+
+function changeLang(l) {
+    lang = l;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('lang-' + l).classList.add('active');
+    document.getElementById('search-input').placeholder = i18n[lang].search;
+    document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
+    document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
+    document.getElementById('txt-our-addr').innerText = i18n[lang].our_addr;
+    renderCategories();
+    renderProducts();
+    updateCartBar();
 }
 
-// ===== ADMIN =====
-if (isAdmin) {
-  const btn = document.createElement('button');
-  btn.textContent = '⚙ Админ';
-  btn.style = 'position:fixed;bottom:90px;right:20px;z-index:9999;';
-  btn.onclick = openAdminPanel;
-  document.body.appendChild(btn);
+function renderCategories() {
+    const data = lang === 'ru' ? cats : catsAz;
+    document.getElementById('cat-scroll').innerHTML = Object.keys(data).map(k => `
+        <button class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${data[k]}</button>
+    `).join('');
 }
 
-function openAdminPanel() {
-  const d = document.createElement('div');
-  d.style = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;';
-  d.innerHTML = 
-  <div style="background:#fff;margin:5%;padding:15px;border-radius:16px;">
-    <h2>Админ</h2>
-    <input id="a-name" placeholder="Название">
-    <input id="a-price" type="number" placeholder="Цена">
-    <input id="a-img-url" placeholder="Ссылка на фото">
-    <input id="a-img-file" type="file">
-    <button onclick="addProduct()">Добавить</button>
-    <hr>
-    <div id="admin-list"></div>
-    <button onclick="this.parentNode.parentNode.remove()">Закрыть</button>
-  </div>;
-  document.body.appendChild(d);
-  renderAdminList();
+function setCat(k) { activeCat = k; renderCategories(); renderProducts(); }
+
+function renderProducts() {
+    const filtered = products.filter(p => activeCat === 'all' || p.cat === activeCat);
+    document.getElementById('product-grid').innerHTML = filtered.map((p, index) => {
+        const count = cart[p.id] || 0;
+        return `
+            <div class="product-card" id="prod-${p.id}" style="animation-delay: ${index * 0.05}s">
+                ${count > 0 ? `<div class="badge">${count}</div>` : ''}
+                <img src="${p.img}" class="product-img" id="img-${p.id}">
+                <h3 class="unbounded">${p[lang].n}</h3>
+                <p>${p[lang].d}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                    <div class="price">${p.price.toFixed(2)} ₼</div>
+                    ${count > 0 ? `
+                        <div style="display:flex; align-items:center; background:#222; border-radius:12px; padding:3px; gap:8px;">
+                            <button onclick="updateCount(${p.id},-1,event)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">-</button>
+                            <span style="font-weight:800;">${count}</span>
+                            <button onclick="updateCount(${p.id},1,event)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">+</button>
+                        </div>
+                    ` : `
+                        <button class="add-btn" onclick="updateCount(${p.id},1,event)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-function addProduct() {
-  const name = document.getElementById('a-name').value;
-  const price = +document.getElementById('a-price').value;
-  const file = document.getElementById('a-img-file').files[0];
-  const url = document.getElementById('a-img-url').value;
-
-  if (file) {
-    const r = new FileReader();
-    r.onload = () => saveProduct(name, price, r.result);
-    r.readAsDataURL(file);
-  } else {
-    saveProduct(name, price, url);
-  }
+function animateFly(id) {
+    const img = document.getElementById(`img-${id}`);
+    const cartBar = document.getElementById('cart-bar');
+    if (!img || !cartBar) return;
+    const imgRect = img.getBoundingClientRect();
+    const cartRect = cartBar.getBoundingClientRect();
+    const flyer = img.cloneNode();
+    flyer.classList.add('fly-item');
+    flyer.style.top = imgRect.top + 'px';
+    flyer.style.left = imgRect.left + 'px';
+    flyer.style.width = imgRect.width + 'px';
+    flyer.style.height = imgRect.height + 'px';
+    document.body.appendChild(flyer);
+    requestAnimationFrame(() => {
+        flyer.style.top = (cartRect.top + 15) + 'px';
+        flyer.style.left = (cartRect.left + cartRect.width / 2 - 15) + 'px';
+        flyer.style.width = '30px';
+        flyer.style.height = '30px';
+        flyer.style.opacity = '0.4';
+        flyer.style.transform = 'rotate(720deg) scale(0.5)';
+    });
+    setTimeout(() => {
+        flyer.remove();
+        cartBar.classList.remove('bump');
+        void cartBar.offsetWidth; 
+        cartBar.classList.add('bump');
+    }, 900);
 }
 
-function saveProduct(name, price, image) {
-  products.push({
-    id: Date.now(),
-    price,
-    image,
-    ru:{n:name}
-  });
-  Storage.save();
-  renderAdminList();
-  renderProducts();
+function updateCount(id, delta) {
+    if (delta > 0) animateFly(id);
+    cart[id] = (cart[id] || 0) + delta;
+    if (cart[id] <= 0) delete cart[id];
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    renderProducts();
+    updateCartBar();
 }
 
-function renderAdminList() {
-  const b = document.getElementById('admin-list');
-  b.innerHTML = '';
-  products.forEach((p,i)=>{
-    b.innerHTML += 
-    <div>
-      <input value="${p.ru.n}" onchange="products[${i}].ru.n=this.value">
-      <input type="number" value="${p.price}" onchange="products[${i}].price=+this.value">
-      <input value="${p.image||''}" onchange="products[${i}].image=this.value">
-      <button onclick="Storage.save();renderProducts()">💾</button>
-      <button onclick="products.splice(${i},1);Storage.save();renderAdminList();renderProducts()">🗑</button>
-    </div>;
-  });
+function updateCartBar() {
+    const bar = document.getElementById('cart-bar');
+    const items = Object.values(cart).reduce((a, b) => a + b, 0);
+    const total = Object.entries(cart).reduce((sum, [id, q]) => sum + (products.find(p => p.id == id).price * q), 0);
+    if (items > 0) {
+        bar.style.display = 'flex';
+        bar.classList.add('active');
+        document.getElementById('txt-items-count').innerText = `${items} ${i18n[lang].items}`;
+        document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
+    } else {
+        bar.classList.remove('active');
+        setTimeout(() => { if (!Object.keys(cart).length) bar.style.display = 'none'; }, 400);
+    }
 }
+
+function openDrawer() {
+    document.getElementById('cart-drawer').style.display = 'flex';
+    const itemsHtml = Object.entries(cart).map(([id, q]) => {
+        const p = products.find(x => x.id == id);
+        return `<div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid var(--border);">
+            <div><b>${p[lang].n}</b><br><small>${q} x ${p.price} ₼</small></div>
+            <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
+        </div>`;
+    }).join('');
+    document.getElementById('drawer-items').innerHTML = itemsHtml || '<p style="text-align:center;">Пусто</p>';
+}
+
+function closeDrawer() { document.getElementById('cart-drawer').style.display = 'none'; }
+
+function handleSearch() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    document.querySelectorAll('.product-card').forEach(c => {
+        c.style.display = c.querySelector('h3').innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+    });
+}
+
+function submitOrder() {
+    const name = document.getElementById('f-name');
+    const phone = document.getElementById('f-phone');
+    const addr = document.getElementById('f-addr');
+
+    let hasError = false;
+    [name, phone, addr].forEach(el => {
+        if (!el.value.trim()) { el.classList.add('error'); hasError = true; }
+        else { el.classList.remove('error'); }
+    });
+
+    if (hasError) {
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        return;
+    }
+
+    const orderItems = Object.entries(cart).map(([id, q]) => {
+        const p = products.find(x => x.id == id);
+        return { name: p.ru.n, quantity: q, price: p.price };
+    });
+
+    const total = orderItems.reduce((s, i) => s + (i.price * i.quantity), 0);
+
+    const data = {
+        customer: { name: name.value, phone: phone.value, address: addr.value },
+        items: orderItems,
+        total: total.toFixed(2)
+    };
+
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    tg.sendData(JSON.stringify(data));
+}
+
+document.getElementById('f-phone').addEventListener('input', function (e) {
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+    if (!x[1]) { e.target.value = '+994 ('; return; }
+    e.target.value = !x[2] ? '+994 (' : '+994 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+});
+
+changeLang('ru');
 </script>
-
 </body>
 </html>
