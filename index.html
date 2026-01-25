@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -37,7 +36,6 @@
 
         h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
 
-        /* --- Header --- */
         header {
             padding: 20px 20px 10px;
             position: sticky;
@@ -70,7 +68,6 @@
             font-size: 14px;
         }
 
-        /* --- Categories --- */
         .categories {
             display: flex;
             gap: 8px;
@@ -97,7 +94,6 @@
             transform: scale(1.05);
         }
 
-        /* --- Grid --- */
         .content { padding: 10px 16px 50px; }
         .grid {
             display: grid;
@@ -145,7 +141,6 @@
             cursor: pointer;
         }
 
-        /* --- Cart Bar --- */
         .cart-bar {
             position: fixed;
             bottom: 25px;
@@ -194,7 +189,6 @@
             cursor: pointer;
         }
 
-        /* --- Fly Effect --- */
         .fly-item {
             position: fixed;
             z-index: 9999;
@@ -206,7 +200,6 @@
             filter: brightness(1.2);
         }
 
-        /* --- Footer Address --- */
         .footer-info {
             padding: 40px 20px 140px;
             text-align: center;
@@ -222,7 +215,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        /* --- Drawer --- */
         #cart-drawer {
             position: fixed;
             inset: 0;
@@ -324,195 +316,210 @@
     <button class="checkout-btn" id="confirm-btn" style="width:100%; height:64px; background:var(--accent-grad); color:#000; font-size: 14px;" onclick="submitOrder()">ПОДТВЕРДИТЬ</button>
 </div>
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
+<!-- ПОДКЛЮЧЕНИЕ FIREBASE -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-let lang = 'ru';
-let cart = {};
-let activeCat = 'all';
+    // Инициализация из глобальных переменных среды
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gastro-gold-pro';
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-const products = [
-    { id: 1, cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
-    { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль"}, az: {n: "Çiken Lüks", d: "Toyuq qril"} },
-    { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Томаты, моцарелла"}, az: {n: "Marqarita", d: "Pomidor, mosarella"} },
-    { id: 4, cat: 'pizza', price: 22.5, img: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
-    { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков"}, az: {n: "Bakı Seti", d: "48 tikə"} }
-];
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-const cats = { all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" };
-const catsAz = { all: "Hamısı", burger: "Burqer", pizza: "Pizza", sushi: "Suşi" };
+    window.lang = 'ru';
+    window.cart = {};
+    window.activeCat = 'all';
+    window.products = []; // Теперь пусто, загрузится из облака
 
-const i18n = {
-    ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", search: "Поиск блюд...", name: "Имя", addr_label: "Адрес", phone: "Телефон", our_addr: "НАШ АДРЕС" },
-    az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", search: "Axtarış...", name: "Ad", addr_label: "Ünvan", phone: "Telefon", our_addr: "ÜNVANIMIZ" }
-};
+    const cats = { all: "Все", burgers: "Бургеры", pizza: "Пицца", sushi: "Суши", drinks: "Напитки" };
+    const catsAz = { all: "Hamısı", burgers: "Burqer", pizza: "Pizza", sushi: "Suşi", drinks: "İçkilər" };
 
-function changeLang(l) {
-    lang = l;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('lang-' + l).classList.add('active');
-    document.getElementById('search-input').placeholder = i18n[lang].search;
-    document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
-    document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
-    document.getElementById('txt-our-addr').innerText = i18n[lang].our_addr;
-    renderCategories();
-    renderProducts();
-    updateCartBar();
-}
-
-function renderCategories() {
-    const data = lang === 'ru' ? cats : catsAz;
-    document.getElementById('cat-scroll').innerHTML = Object.keys(data).map(k => `
-        <button class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${data[k]}</button>
-    `).join('');
-}
-
-function setCat(k) { activeCat = k; renderCategories(); renderProducts(); }
-
-function renderProducts() {
-    const filtered = products.filter(p => activeCat === 'all' || p.cat === activeCat);
-    document.getElementById('product-grid').innerHTML = filtered.map((p, index) => {
-        const count = cart[p.id] || 0;
-        return `
-            <div class="product-card" id="prod-${p.id}" style="animation-delay: ${index * 0.05}s">
-                ${count > 0 ? `<div class="badge">${count}</div>` : ''}
-                <img src="${p.img}" class="product-img" id="img-${p.id}">
-                <h3 class="unbounded">${p[lang].n}</h3>
-                <p>${p[lang].d}</p>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
-                    <div class="price">${p.price.toFixed(2)} ₼</div>
-                    ${count > 0 ? `
-                        <div style="display:flex; align-items:center; background:#222; border-radius:12px; padding:3px; gap:8px;">
-                            <button onclick="updateCount(${p.id},-1,event)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">-</button>
-                            <span style="font-weight:800;">${count}</span>
-                            <button onclick="updateCount(${p.id},1,event)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">+</button>
-                        </div>
-                    ` : `
-                        <button class="add-btn" onclick="updateCount(${p.id},1,event)">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        </button>
-                    `}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function animateFly(id) {
-    const img = document.getElementById(`img-${id}`);
-    const cartBar = document.getElementById('cart-bar');
-    if (!img || !cartBar) return;
-    const imgRect = img.getBoundingClientRect();
-    const cartRect = cartBar.getBoundingClientRect();
-    const flyer = img.cloneNode();
-    flyer.classList.add('fly-item');
-    flyer.style.top = imgRect.top + 'px';
-    flyer.style.left = imgRect.left + 'px';
-    flyer.style.width = imgRect.width + 'px';
-    flyer.style.height = imgRect.height + 'px';
-    document.body.appendChild(flyer);
-    requestAnimationFrame(() => {
-        flyer.style.top = (cartRect.top + 15) + 'px';
-        flyer.style.left = (cartRect.left + cartRect.width / 2 - 15) + 'px';
-        flyer.style.width = '30px';
-        flyer.style.height = '30px';
-        flyer.style.opacity = '0.4';
-        flyer.style.transform = 'rotate(720deg) scale(0.5)';
-    });
-    setTimeout(() => {
-        flyer.remove();
-        cartBar.classList.remove('bump');
-        void cartBar.offsetWidth; 
-        cartBar.classList.add('bump');
-    }, 900);
-}
-
-function updateCount(id, delta) {
-    if (delta > 0) animateFly(id);
-    cart[id] = (cart[id] || 0) + delta;
-    if (cart[id] <= 0) delete cart[id];
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-    renderProducts();
-    updateCartBar();
-}
-
-function updateCartBar() {
-    const bar = document.getElementById('cart-bar');
-    const items = Object.values(cart).reduce((a, b) => a + b, 0);
-    const total = Object.entries(cart).reduce((sum, [id, q]) => sum + (products.find(p => p.id == id).price * q), 0);
-    if (items > 0) {
-        bar.style.display = 'flex';
-        bar.classList.add('active');
-        document.getElementById('txt-items-count').innerText = `${items} ${i18n[lang].items}`;
-        document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
-    } else {
-        bar.classList.remove('active');
-        setTimeout(() => { if (!Object.keys(cart).length) bar.style.display = 'none'; }, 400);
-    }
-}
-
-function openDrawer() {
-    document.getElementById('cart-drawer').style.display = 'flex';
-    const itemsHtml = Object.entries(cart).map(([id, q]) => {
-        const p = products.find(x => x.id == id);
-        return `<div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid var(--border);">
-            <div><b>${p[lang].n}</b><br><small>${q} x ${p.price} ₼</small></div>
-            <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
-        </div>`;
-    }).join('');
-    document.getElementById('drawer-items').innerHTML = itemsHtml || '<p style="text-align:center;">Пусто</p>';
-}
-
-function closeDrawer() { document.getElementById('cart-drawer').style.display = 'none'; }
-
-function handleSearch() {
-    const q = document.getElementById('search-input').value.toLowerCase();
-    document.querySelectorAll('.product-card').forEach(c => {
-        c.style.display = c.querySelector('h3').innerText.toLowerCase().includes(q) ? 'flex' : 'none';
-    });
-}
-
-function submitOrder() {
-    const name = document.getElementById('f-name');
-    const phone = document.getElementById('f-phone');
-    const addr = document.getElementById('f-addr');
-
-    let hasError = false;
-    [name, phone, addr].forEach(el => {
-        if (!el.value.trim()) { el.classList.add('error'); hasError = true; }
-        else { el.classList.remove('error'); }
-    });
-
-    if (hasError) {
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        return;
-    }
-
-    const orderItems = Object.entries(cart).map(([id, q]) => {
-        const p = products.find(x => x.id == id);
-        return { name: p.ru.n, quantity: q, price: p.price };
-    });
-
-    const total = orderItems.reduce((s, i) => s + (i.price * i.quantity), 0);
-
-    const data = {
-        customer: { name: name.value, phone: phone.value, address: addr.value },
-        items: orderItems,
-        total: total.toFixed(2)
+    const i18n = {
+        ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", search: "Поиск блюд...", name: "Имя", addr_label: "Адрес", phone: "Телефон", our_addr: "НАШ АДРЕС" },
+        az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", search: "Axtarış...", name: "Ad", addr_label: "Ünvan", phone: "Телефон", our_addr: "ÜNVANIMIZ" }
     };
 
-    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-    tg.sendData(JSON.stringify(data));
-}
+    // Загрузка данных из облака
+    signInAnonymously(auth).then(() => {
+        const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'menu');
+        onSnapshot(colRef, (snapshot) => {
+            window.products = [];
+            snapshot.forEach(doc => window.products.push({ id: doc.id, ...doc.data() }));
+            renderCategories();
+            renderProducts();
+            updateCartBar();
+        });
+    });
 
-document.getElementById('f-phone').addEventListener('input', function (e) {
-    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
-    if (!x[1]) { e.target.value = '+994 ('; return; }
-    e.target.value = !x[2] ? '+994 (' : '+994 (' + x[2] + (x[3] ? ') ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
-});
+    window.changeLang = function(l) {
+        window.lang = l;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('lang-' + l).classList.add('active');
+        document.getElementById('search-input').placeholder = i18n[window.lang].search;
+        document.getElementById('txt-cart-title').innerText = i18n[window.lang].cart;
+        document.getElementById('confirm-btn').innerText = i18n[window.lang].confirm;
+        document.getElementById('txt-our-addr').innerText = i18n[window.lang].our_addr;
+        renderCategories();
+        renderProducts();
+        updateCartBar();
+    }
 
-changeLang('ru');
+    function renderCategories() {
+        const data = window.lang === 'ru' ? cats : catsAz;
+        document.getElementById('cat-scroll').innerHTML = Object.keys(data).map(k => `
+            <button class="cat-btn ${window.activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${data[k]}</button>
+        `).join('');
+    }
+
+    window.setCat = function(k) { window.activeCat = k; renderCategories(); renderProducts(); }
+
+    function renderProducts() {
+        const filtered = window.products.filter(p => window.activeCat === 'all' || p.cat === window.activeCat);
+        document.getElementById('product-grid').innerHTML = filtered.map((p, index) => {
+            const count = window.cart[p.id] || 0;
+            return `
+                <div class="product-card" id="prod-${p.id}" style="animation-delay: ${index * 0.05}s">
+                    ${count > 0 ? `<div class="badge">${count}</div>` : ''}
+                    <img src="${p.img}" class="product-img" id="img-${p.id}">
+                    <h3 class="unbounded">${p[window.lang].n}</h3>
+                    <p>${p[window.lang].d || ''}</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                        <div class="price">${p.price.toFixed(2)} ₼</div>
+                        ${count > 0 ? `
+                            <div style="display:flex; align-items:center; background:#222; border-radius:12px; padding:3px; gap:8px;">
+                                <button onclick="updateCount('${p.id}',-1)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">-</button>
+                                <span style="font-weight:800;">${count}</span>
+                                <button onclick="updateCount('${p.id}',1)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">+</button>
+                            </div>
+                        ` : `
+                            <button class="add-btn" onclick="updateCount('${p.id}',1)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.updateCount = function(id, delta) {
+        if (delta > 0) animateFly(id);
+        window.cart[id] = (window.cart[id] || 0) + delta;
+        if (window.cart[id] <= 0) delete window.cart[id];
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        renderProducts();
+        updateCartBar();
+    }
+
+    function animateFly(id) {
+        const img = document.getElementById(`img-${id}`);
+        const cartBar = document.getElementById('cart-bar');
+        if (!img || !cartBar) return;
+        const imgRect = img.getBoundingClientRect();
+        const cartRect = cartBar.getBoundingClientRect();
+        const flyer = img.cloneNode();
+        flyer.classList.add('fly-item');
+        flyer.style.top = imgRect.top + 'px';
+        flyer.style.left = imgRect.left + 'px';
+        flyer.style.width = imgRect.width + 'px';
+        flyer.style.height = imgRect.height + 'px';
+        document.body.appendChild(flyer);
+        requestAnimationFrame(() => {
+            flyer.style.top = (cartRect.top + 15) + 'px';
+            flyer.style.left = (cartRect.left + cartRect.width / 2 - 15) + 'px';
+            flyer.style.width = '30px';
+            flyer.style.height = '30px';
+            flyer.style.opacity = '0.4';
+            flyer.style.transform = 'rotate(720deg) scale(0.5)';
+        });
+        setTimeout(() => {
+            flyer.remove();
+            cartBar.classList.remove('bump');
+            void cartBar.offsetWidth; 
+            cartBar.classList.add('bump');
+        }, 900);
+    }
+
+    function updateCartBar() {
+        const bar = document.getElementById('cart-bar');
+        const items = Object.values(window.cart).reduce((a, b) => a + b, 0);
+        const total = Object.entries(window.cart).reduce((sum, [id, q]) => {
+            const prod = window.products.find(p => p.id == id);
+            return sum + (prod ? prod.price * q : 0);
+        }, 0);
+        
+        if (items > 0) {
+            bar.style.display = 'flex';
+            bar.classList.add('active');
+            document.getElementById('txt-items-count').innerText = `${items} ${i18n[window.lang].items}`;
+            document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
+        } else {
+            bar.classList.remove('active');
+            setTimeout(() => { if (!Object.keys(window.cart).length) bar.style.display = 'none'; }, 400);
+        }
+    }
+
+    window.openDrawer = function() {
+        document.getElementById('cart-drawer').style.display = 'flex';
+        const itemsHtml = Object.entries(window.cart).map(([id, q]) => {
+            const p = window.products.find(x => x.id == id);
+            if (!p) return '';
+            return `<div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid var(--border);">
+                <div><b>${p[window.lang].n}</b><br><small>${q} x ${p.price} ₼</small></div>
+                <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
+            </div>`;
+        }).join('');
+        document.getElementById('drawer-items').innerHTML = itemsHtml || '<p style="text-align:center;">Пусто</p>';
+    }
+
+    window.closeDrawer = function() { document.getElementById('cart-drawer').style.display = 'none'; }
+
+    window.handleSearch = function() {
+        const q = document.getElementById('search-input').value.toLowerCase();
+        document.querySelectorAll('.product-card').forEach(c => {
+            c.style.display = c.querySelector('h3').innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    window.submitOrder = function() {
+        const name = document.getElementById('f-name');
+        const phone = document.getElementById('f-phone');
+        const addr = document.getElementById('f-addr');
+
+        let hasError = false;
+        [name, phone, addr].forEach(el => {
+            if (!el.value.trim()) { el.classList.add('error'); hasError = true; }
+            else { el.classList.remove('error'); }
+        });
+
+        if (hasError) return;
+
+        const orderItems = Object.entries(window.cart).map(([id, q]) => {
+            const p = window.products.find(x => x.id == id);
+            return { name: p.ru.n, quantity: q, price: p.price };
+        });
+
+        const total = orderItems.reduce((s, i) => s + (i.price * i.quantity), 0);
+
+        const data = {
+            customer: { name: name.value, phone: phone.value, address: addr.value },
+            items: orderItems,
+            total: total.toFixed(2)
+        };
+
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        tg.sendData(JSON.stringify(data));
+    }
+
+    changeLang('ru');
 </script>
+
 </body>
 </html>
+
