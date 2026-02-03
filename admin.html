@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gastro Admin — Панель управления</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js" type="module"></script>
+    <style>
+        :root {
+            --bg: #0c0c0c;
+            --card: #161616;
+            --accent: #FFD200;
+            --text: #ffffff;
+            --border: rgba(255,255,255,0.1);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 50px;
+        }
+        .unbounded { font-family: 'Unbounded', sans-serif; }
+        header {
+            padding: 20px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            overflow-x: auto;
+            background: var(--bg);
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: #fff;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .nav-btn.active {
+            background: var(--accent);
+            color: #000;
+            font-weight: 700;
+        }
+        .section { padding: 20px; display: none; }
+        .section.active { display: block; }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        input, select, textarea {
+            width: 100%;
+            background: #222;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 10px;
+            color: #fff;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
+        button.primary {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .item-preview {
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .item-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+        .item-info { padding: 10px; }
+        .item-info h4 { margin: 0; font-size: 14px; }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255,0,0,0.8);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            padding: 5px;
+        }
+        .order-card {
+            border-left: 4px solid var(--accent);
+            margin-bottom: 15px;
+        }
+        .status-new { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="unbounded" style="font-size: 18px;">GASTRO<span style="color:var(--accent)">ADMIN</span></div>
+    <div id="auth-status" style="font-size: 12px; opacity: 0.6;">Подключение...</div>
+</header>
+
+<div class="nav">
+    <button class="nav-btn active" onclick="showTab('orders')">Заказы</button>
+    <button class="nav-btn" onclick="showTab('menu')">Меню</button>
+    <button class="nav-btn" onclick="showTab('ads')">Реклама</button>
+</div>
+
+<!-- СЕКЦИЯ ЗАКАЗОВ -->
+<div id="tab-orders" class="section active">
+    <h2 class="unbounded">Новые заказы</h2>
+    <div id="orders-list"></div>
+</div>
+
+<!-- СЕКЦИЯ МЕНЮ -->
+<div id="tab-menu" class="section">
+    <div class="card">
+        <h3 class="unbounded">Добавить блюдо</h3>
+        <label>Категория</label>
+        <select id="m-cat">
+            <option value="burger">Бургеры</option>
+            <option value="pizza">Пицца</option>
+            <option value="sushi">Суши</option>
+        </select>
+        <input type="text" id="m-name-ru" placeholder="Название (RU)">
+        <input type="text" id="m-name-az" placeholder="Название (AZ)">
+        <input type="number" id="m-price" placeholder="Цена (₼)">
+        <textarea id="m-desc-ru" placeholder="Описание (RU)"></textarea>
+        <input type="file" id="m-img" accept="image/*">
+        <button class="primary" onclick="uploadProduct()">СОХРАНИТЬ БЛЮДО</button>
+    </div>
+    <div class="grid" id="menu-list"></div>
+</div>
+
+<!-- СЕКЦИЯ РЕКЛАМЫ -->
+<div id="tab-ads" class="section">
+    <div class="card">
+        <h3 class="unbounded">Создать баннер</h3>
+        <select id="ad-pos">
+            <option value="top">Верхний баннер (Slider)</option>
+            <option value="inline">Карточка в списке (Inline)</option>
+        </select>
+        <input type="text" id="ad-link" placeholder="Ссылка (необязательно)">
+        <input type="file" id="ad-img" accept="image/*">
+        <button class="primary" onclick="uploadAd()">ДОБАВИТЬ РЕКЛАМУ</button>
+    </div>
+    <div id="ads-list"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+    // --- КОНФИГУРАЦИЯ FIREBASE (Скопируй из своего index.html) ---
+    const firebaseConfig = {
+        apiKey: "ВСТАВЬ_СВОЙ_API_KEY",
+        authDomain: "gastroadmin-5c17f.firebaseapp.com",
+        projectId: "gastroadmin-5c17f",
+        storageBucket: "gastroadmin-5c17f.firebasestorage.app",
+        messagingSenderId: "650534134962",
+        appId: "ВСТАВЬ_СВОЙ_APP_ID"
+    };
+
+    const APP_ID = "gastro-gold-v1";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    // Авторизация
+    signInAnonymously(auth);
+    onAuthStateChanged(auth, user => {
+        document.getElementById('auth-status').innerText = user ? "● В сети" : "Ошибка входа";
+        if(user) initListeners();
+    });
+
+    window.showTab = (tab) => {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-'+tab).classList.add('active');
+        event.target.classList.add('active');
+    };
+
+    function initListeners() {
+        // Слушаем заказы
+        onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'orders'), s => {
+            const list = document.getElementById('orders-list');
+            list.innerHTML = '';
+            s.forEach(d => {
+                const o = d.data();
+                list.innerHTML += `
+                    <div class="card order-card">
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="status-new">НОВЫЙ ЗАКАЗ</span>
+                            <span>${new Date(o.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                        <p><b>${o.customer.name}</b> (${o.customer.phone})</p>
+                        <p style="font-size:13px; color:#aaa">${o.customer.addr}</p>
+                        <hr style="opacity:0.1">
+                        <div>${o.items.map(i => `• ${i.n} x${i.q}`).join('<br>')}</div>
+                        <h3 style="text-align:right; color:var(--accent)">${o.total.toFixed(2)} ₼</h3>
+                        <button onclick="deleteItem('orders', '${d.id}')" style="background:none; border:1px solid red; color:red; padding:5px; border-radius:5px;">Удалить</button>
+                    </div>
+                `;
+            });
+        });
+
+        // Слушаем меню
+        onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'menu'), s => {
+            const list = document.getElementById('menu-list');
+            list.innerHTML = '';
+            s.forEach(d => {
+                const m = d.data();
+                list.innerHTML += `
+                    <div class="item-preview">
+                        <button class="delete-btn" onclick="deleteItem('menu', '${d.id}')">✕</button>
+                        <img src="${m.img}">
+                        <div class="item-info">
+                            <h4>${m.ru.n}</h4>
+                            <div style="color:var(--accent); font-weight:800">${m.price} ₼</div>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        // Слушаем рекламу
+        onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'ads'), s => {
+            const list = document.getElementById('ads-list');
+            list.innerHTML = '';
+            s.forEach(d => {
+                const ad = d.data();
+                list.innerHTML += `
+                    <div class="card" style="display:flex; gap:15px; align-items:center">
+                        <img src="${ad.imageUrl}" style="width:80px; height:50px; object-fit:cover; border-radius:8px">
+                        <div style="flex:1">
+                            <div>Тип: ${ad.position}</div>
+                            <div style="font-size:11px; opacity:0.6">${ad.link || 'Нет ссылки'}</div>
+                        </div>
+                        <button onclick="deleteItem('ads', '${d.id}')" style="color:red; background:none; border:none; font-size:20px">✕</button>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    // Загрузка блюда
+    window.uploadProduct = async () => {
+        const file = document.getElementById('m-img').files[0];
+        if(!file) return alert("Выберите фото!");
+        
+        const btn = event.target;
+        btn.innerText = "ЗАГРУЗКА...";
+        btn.disabled = true;
+
+        const sRef = ref(storage, `menu/${Date.now()}_${file.name}`);
+        await uploadBytes(sRef, file);
+        const url = await getDownloadURL(sRef);
+
+        const data = {
+            cat: document.getElementById('m-cat').value,
+            price: parseFloat(document.getElementById('m-price').value),
+            img: url,
+            ru: { n: document.getElementById('m-name-ru').value, d: document.getElementById('m-desc-ru').value },
+            az: { n: document.getElementById('m-name-az').value, d: document.getElementById('m-desc-ru').value }
+        };
+
+        await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'menu'), data);
+        alert("Блюдо добавлено!");
+        location.reload();
+    };
+
+    // Загрузка рекламы
+    window.uploadAd = async () => {
+        const file = document.getElementById('ad-img').files[0];
+        if(!file) return alert("Выберите фото!");
+
+        const sRef = ref(storage, `ads/${Date.now()}_${file.name}`);
+        await uploadBytes(sRef, file);
+        const url = await getDownloadURL(sRef);
+
+        await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'ads'), {
+            imageUrl: url,
+            position: document.getElementById('ad-pos').value,
+            link: document.getElementById('ad-link').value,
+            enabled: true
+        });
+        alert("Реклама добавлена!");
+    };
+
+    window.deleteItem = async (col, id) => {
+        if(confirm("Удалить?")) {
+            await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', col, id));
+        }
+    };
+</script>
+
+</body>
+</html>
+
