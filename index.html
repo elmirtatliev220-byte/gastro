@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gastro Gold Azerbaijan + Ads</title>
+    <title>Gastro Gold Azerbaijan</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
-    <!-- Firebase SDK для управления рекламой в реальном времени -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
@@ -22,11 +21,7 @@
             --safe-area-bottom: env(safe-area-inset-bottom);
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: border-color 0.3s ease; }
         
         body {
             font-family: 'Manrope', sans-serif;
@@ -40,7 +35,6 @@
 
         h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
 
-        /* --- Header --- */
         header {
             padding: 20px 20px 10px;
             position: sticky;
@@ -73,7 +67,6 @@
             font-size: 14px;
         }
 
-        /* --- Categories --- */
         .categories {
             display: flex;
             gap: 8px;
@@ -100,7 +93,6 @@
             transform: scale(1.05);
         }
 
-        /* --- Ads Styling --- */
         .ad-banner-top {
             margin: 0 16px 15px;
             border-radius: 18px;
@@ -108,12 +100,12 @@
             background: var(--card-bg);
             border: 1px solid var(--border);
             height: 100px;
-            display: none; /* Скрыто, пока нет данных */
+            display: none;
         }
         .ad-banner-top img { width: 100%; height: 100%; object-fit: cover; }
 
         .ad-card-inline {
-            grid-column: span 2; /* Растягиваем на всю ширину сетки */
+            grid-column: span 2;
             background: var(--card-bg);
             border-radius: 20px;
             overflow: hidden;
@@ -134,7 +126,6 @@
             text-transform: uppercase;
         }
 
-        /* --- Grid --- */
         .content { padding: 10px 16px 50px; }
         .grid {
             display: grid;
@@ -167,7 +158,6 @@
         }
         .product-card h3 { font-size: 14px; margin: 5px 0; height: 34px; overflow: hidden; }
         .product-card p { font-size: 11px; color: var(--text-dim); margin: 0 0 10px; height: 30px; overflow: hidden; }
-        
         .price { font-weight: 800; font-size: 15px; color: var(--accent); }
 
         .add-btn {
@@ -179,10 +169,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
         }
 
-        /* --- Cart Bar --- */
         .cart-bar {
             position: fixed;
             bottom: 25px;
@@ -197,7 +185,6 @@
             justify-content: space-between;
             z-index: 1000;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
             cursor: pointer;
         }
         .cart-bar.active { display: flex; animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -220,10 +207,8 @@
             font-family: 'Unbounded';
             font-size: 12px;
             font-weight: 700;
-            cursor: pointer;
         }
 
-        /* --- Footer Address --- */
         .footer-info {
             padding: 40px 20px 140px;
             text-align: center;
@@ -234,12 +219,9 @@
             background: var(--card-bg);
             border-radius: 20px;
             padding: 25px;
-            display: inline-block;
             width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        /* --- Drawer --- */
         #cart-drawer {
             position: fixed;
             inset: 0;
@@ -264,7 +246,6 @@
             padding: 16px;
             color: #fff;
             margin-bottom: 12px;
-            font-family: inherit;
             outline: none;
         }
         input.modern:focus { border-color: var(--accent); }
@@ -310,8 +291,6 @@
 </header>
 
 <div class="categories" id="cat-scroll"></div>
-
-<!-- Верхний рекламный баннер -->
 <div class="ad-banner-top" id="top-ad-slot"></div>
 
 <div class="content">
@@ -342,253 +321,248 @@
     <div id="drawer-items" style="flex:1; overflow-y:auto; margin-bottom:20px;"></div>
     <div class="form-group">
         <input type="text" class="modern" id="f-name" placeholder="Имя">
-        <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__">
+        <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__" maxlength="19">
         <input type="text" class="modern" id="f-addr" placeholder="Адрес доставки">
     </div>
     <button class="checkout-btn" id="confirm-btn" style="width:100%; height:64px; background:var(--accent-grad); color:#000; font-size: 14px;" onclick="submitOrder()">ПОДТВЕРДИТЬ</button>
 </div>
 
-<script>
-// --- Конфигурация Firebase для рекламы ---
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'gastro-gold-ads';
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-let db;
-let adsList = []; // Массив для хранения рекламных баннеров
+    const firebaseConfig = {
+        apiKey: "ВСТАВЬ_СВОЙ_API_KEY",
+        authDomain: "gastroadmin-5c17f.firebaseapp.com",
+        projectId: "gastroadmin-5c17f",
+        storageBucket: "gastroadmin-5c17f.firebasestorage.app",
+        messagingSenderId: "650534134962",
+        appId: "ВСТАВЬ_СВОЙ_APP_ID"
+    };
 
-const tg = window.Telegram.WebApp;
-tg.expand();
+    const APP_ID = "gastro-gold-v1";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-let lang = 'ru';
-let cart = {};
-let activeCat = 'all';
+    let staticProducts = [
+        { id: 1, cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
+        { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль"}, az: {n: "Çiken Lüks", d: "Toyuq qril"} },
+        { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Томаты, моцарелла"}, az: {n: "Marqarita", d: "Pomidor, mosarella"} },
+        { id: 4, cat: 'pizza', price: 22.5, img: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
+        { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков"}, az: {n: "Bakı Seti", d: "48 tikə"} }
+    ];
 
-// Ваши основные блюда (НЕ МЕНЯЮТСЯ)
-const products = [
-    { id: 1, cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
-    { id: 2, cat: 'burger', price: 12.0, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль"}, az: {n: "Çiken Lüks", d: "Toyuq qril"} },
-    { id: 3, cat: 'pizza', price: 18.0, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Томаты, моцарелла"}, az: {n: "Marqarita", d: "Pomidor, mosarella"} },
-    { id: 4, cat: 'pizza', price: 22.5, img: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
-    { id: 5, cat: 'sushi', price: 35.0, img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400', ru: {n: "Сет Баку", d: "48 кусочков"}, az: {n: "Bakı Seti", d: "48 tikə"} }
-];
+    let dbProducts = [];
+    let adsList = [];
+    let lang = 'ru';
+    let cart = {};
+    let activeCat = 'all';
 
-const cats = { all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" };
-const catsAz = { all: "Hamısı", burger: "Burqer", pizza: "Pizza", sushi: "Suşi" };
+    const cats = { all: "Все", burger: "Бургеры", pizza: "Пицца", sushi: "Суши" };
+    const catsAz = { all: "Hamısı", burger: "Burqer", pizza: "Pizza", sushi: "Suşi" };
 
-const i18n = {
-    ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", search: "Поиск блюд...", name: "Имя", addr_label: "Адрес", phone: "Телефон", our_addr: "НАШ АДРЕС" },
-    az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", search: "Axtarış...", name: "Ad", addr_label: "Ünvan", phone: "Telefon", our_addr: "ÜNVANIMIZ" }
-};
+    const i18n = {
+        ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", search: "Поиск...", our_addr: "НАШ АДРЕС" },
+        az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", search: "Axtarış...", our_addr: "ÜNVANIMIZ" }
+    };
 
-// --- Инициализация рекламы из БД ---
-async function initAds() {
-    if (Object.keys(firebaseConfig).length === 0) {
-        console.log("Firebase config not found. Ads will be empty.");
-        return;
-    }
-    
-    try {
-        const app = firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore(app);
-        const auth = firebase.auth(app);
-        
-        await auth.signInAnonymously();
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        // Слушаем изменения в коллекции рекламы
-        const adsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('ads');
-        adsRef.onSnapshot((querySnapshot) => {
+    // Маска для Азербайджанского номера
+    const phoneInput = document.getElementById('f-phone');
+    phoneInput.addEventListener('input', function(e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+        if (!x[1]) {
+            e.target.value = '+994';
+            return;
+        }
+        if (!e.target.value.startsWith('+994')) {
+            e.target.value = '+994' + e.target.value.replace('+994', '');
+        }
+        e.target.value = !x[3] ? '+994 (' + x[2] : '+994 (' + x[2] + ') ' + x[3] + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+    });
+
+    signInAnonymously(auth).then(() => {
+        onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'ads'), s => {
             adsList = [];
-            querySnapshot.forEach((doc) => {
-                adsList.push({ id: doc.id, ...doc.data() });
-            });
+            s.forEach(d => adsList.push(d.data()));
             renderTopAd();
-            renderProducts(); // Перерисовываем меню, чтобы вставить карточки рекламы
-        }, (err) => console.error("Ads error:", err));
-    } catch (e) {
-        console.error("Firebase init failed:", e);
+            renderProducts();
+        });
+
+        onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'menu'), s => {
+            dbProducts = [];
+            s.forEach(d => dbProducts.push({ id: d.id, ...d.data() }));
+            renderProducts();
+        });
+    });
+
+    window.changeLang = (l) => {
+        lang = l;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('lang-' + l).classList.add('active');
+        document.getElementById('search-input').placeholder = i18n[lang].search;
+        document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
+        document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
+        document.getElementById('txt-our-addr').innerText = i18n[lang].our_addr;
+        renderCategories();
+        renderProducts();
+        updateCartBar();
+    };
+
+    window.setCat = (k) => { activeCat = k; renderCategories(); renderProducts(); };
+
+    function renderCategories() {
+        const data = lang === 'ru' ? cats : catsAz;
+        document.getElementById('cat-scroll').innerHTML = Object.keys(data).map(k => `
+            <button class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${data[k]}</button>
+        `).join('');
     }
-}
 
-function renderTopAd() {
-    const slot = document.getElementById('top-ad-slot');
-    // Берем первый активный баннер для верха
-    const topAd = adsList.find(a => a.position === 'top');
-    if (topAd) {
-        slot.style.display = 'block';
-        slot.innerHTML = `<img src="${topAd.imageUrl}" onclick="window.open('${topAd.link || '#'}')">`;
-    } else {
-        slot.style.display = 'none';
+    function renderTopAd() {
+        const slot = document.getElementById('top-ad-slot');
+        const ad = adsList.find(a => a.position === 'top' && a.enabled);
+        if (ad) {
+            slot.style.display = 'block';
+            slot.innerHTML = `<img src="${ad.imageUrl}" onclick="window.open('${ad.link || '#'}')">`;
+        } else slot.style.display = 'none';
     }
-}
 
-function changeLang(l) {
-    lang = l;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('lang-' + l).classList.add('active');
-    document.getElementById('search-input').placeholder = i18n[lang].search;
-    document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
-    document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
-    document.getElementById('txt-our-addr').innerText = i18n[lang].our_addr;
-    renderCategories();
-    renderProducts();
-    updateCartBar();
-}
+    function renderProducts() {
+        const allProducts = [...staticProducts, ...dbProducts];
+        const filtered = allProducts.filter(p => activeCat === 'all' || p.cat === activeCat);
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = '';
 
-function renderCategories() {
-    const data = lang === 'ru' ? cats : catsAz;
-    document.getElementById('cat-scroll').innerHTML = Object.keys(data).map(k => `
-        <button class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${data[k]}</button>
-    `).join('');
-}
+        const inlineAds = adsList.filter(a => a.position === 'inline' && a.enabled);
 
-function setCat(k) { activeCat = k; renderCategories(); renderProducts(); }
-
-function renderProducts() {
-    const filtered = products.filter(p => activeCat === 'all' || p.cat === activeCat);
-    const grid = document.getElementById('product-grid');
-    grid.innerHTML = '';
-
-    // Логика вставки рекламы внутрь сетки
-    const inlineAds = adsList.filter(a => a.position === 'inline');
-
-    filtered.forEach((p, index) => {
-        const count = cart[p.id] || 0;
-        const productHtml = `
-            <div class="product-card" id="prod-${p.id}" style="animation-delay: ${index * 0.05}s">
-                ${count > 0 ? `<div class="badge">${count}</div>` : ''}
-                <img src="${p.img}" class="product-img" id="img-${p.id}">
-                <h3 class="unbounded">${p[lang].n}</h3>
-                <p>${p[lang].d}</p>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
-                    <div class="price">${p.price.toFixed(2)} ₼</div>
-                    ${count > 0 ? `
-                        <div style="display:flex; align-items:center; background:#222; border-radius:12px; padding:3px; gap:8px;">
-                            <button onclick="updateCount(${p.id},-1)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">-</button>
-                            <span style="font-weight:800;">${count}</span>
-                            <button onclick="updateCount(${p.id},1)" style="width:30px; height:30px; border:none; background:var(--accent); border-radius:10px; font-weight:bold;">+</button>
-                        </div>
-                    ` : `
-                        <button class="add-btn" onclick="updateCount(${p.id},1)">
+        filtered.forEach((p, index) => {
+            const count = cart[p.id] ? cart[p.id].q : 0;
+            grid.innerHTML += `
+                <div class="product-card" style="animation-delay: ${index * 0.05}s">
+                    ${count > 0 ? `<div class="badge">${count}</div>` : ''}
+                    <img src="${p.img}" class="product-img" id="img-${p.id}">
+                    <h3 class="unbounded">${p[lang]?.n || 'Unnamed'}</h3>
+                    <p>${p[lang]?.d || ''}</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                        <div class="price">${p.price} ₼</div>
+                        <button class="add-btn" onclick="updateCount('${p.id}', 1, '${p[lang]?.n}', ${p.price})">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
-                    `}
-                </div>
-            </div>
-        `;
-        grid.innerHTML += productHtml;
-
-        // Вставляем рекламу после каждого 4-го товара, если она есть
-        if ((index + 1) % 4 === 0 && inlineAds.length > 0) {
-            const adIndex = Math.floor(index / 4) % inlineAds.length;
-            const ad = inlineAds[adIndex];
-            grid.innerHTML += `
-                <div class="ad-card-inline" onclick="window.open('${ad.link || '#'}')">
-                    <span class="ad-label">AD</span>
-                    <img src="${ad.imageUrl}">
+                    </div>
                 </div>
             `;
-        }
-    });
-}
-
-function updateCount(id, delta) {
-    if (delta > 0) animateFly(id);
-    cart[id] = (cart[id] || 0) + delta;
-    if (cart[id] <= 0) delete cart[id];
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-    renderProducts();
-    updateCartBar();
-}
-
-function animateFly(id) {
-    const img = document.getElementById(`img-${id}`);
-    const cartBar = document.getElementById('cart-bar');
-    if (!img || !cartBar) return;
-    const imgRect = img.getBoundingClientRect();
-    const cartRect = cartBar.getBoundingClientRect();
-    const flyer = img.cloneNode();
-    flyer.classList.add('fly-item');
-    flyer.style.top = imgRect.top + 'px';
-    flyer.style.left = imgRect.left + 'px';
-    flyer.style.width = imgRect.width + 'px';
-    flyer.style.height = imgRect.height + 'px';
-    document.body.appendChild(flyer);
-    requestAnimationFrame(() => {
-        flyer.style.top = (cartRect.top + 15) + 'px';
-        flyer.style.left = (cartRect.left + cartRect.width / 2 - 15) + 'px';
-        flyer.style.width = '30px';
-        flyer.style.height = '30px';
-        flyer.style.opacity = '0.4';
-        flyer.style.transform = 'rotate(720deg) scale(0.5)';
-    });
-    setTimeout(() => flyer.remove(), 900);
-}
-
-function updateCartBar() {
-    const bar = document.getElementById('cart-bar');
-    const items = Object.values(cart).reduce((a, b) => a + b, 0);
-    const total = Object.entries(cart).reduce((sum, [id, q]) => {
-        const p = products.find(x => x.id == id);
-        return sum + (p ? p.price * q : 0);
-    }, 0);
-    
-    if (items > 0) {
-        bar.style.display = 'flex';
-        bar.classList.add('active');
-        document.getElementById('txt-items-count').innerText = `${items} ${i18n[lang].items}`;
-        document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
-    } else {
-        bar.classList.remove('active');
-        setTimeout(() => { if (!Object.keys(cart).length) bar.style.display = 'none'; }, 400);
+            if ((index + 1) % 4 === 0 && inlineAds.length > 0) {
+                const ad = inlineAds[Math.floor(index/4) % inlineAds.length];
+                grid.innerHTML += `<div class="ad-card-inline" onclick="window.open('${ad.link}')"><span class="ad-label">AD</span><img src="${ad.imageUrl}"></div>`;
+            }
+        });
     }
-}
 
-function openDrawer() {
-    document.getElementById('cart-drawer').style.display = 'flex';
-    const itemsHtml = Object.entries(cart).map(([id, q]) => {
-        const p = products.find(x => x.id == id);
-        return `<div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid var(--border);">
-            <div><b>${p[lang].n}</b><br><small>${q} x ${p.price} ₼</small></div>
-            <div style="font-weight:900;">${(p.price * q).toFixed(2)} ₼</div>
-        </div>`;
-    }).join('');
-    document.getElementById('drawer-items').innerHTML = itemsHtml || '<p style="text-align:center;">Пусто</p>';
-}
+    window.updateCount = (id, delta, name, price) => {
+        if (delta > 0) animateFly(id);
+        if (!cart[id]) cart[id] = { n: name, p: price, q: 0 };
+        cart[id].q += delta;
+        if (cart[id].q <= 0) delete cart[id];
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        updateCartBar();
+        renderProducts();
+        if(document.getElementById('cart-drawer').style.display === 'flex') renderDrawer();
+    };
 
-function closeDrawer() { document.getElementById('cart-drawer').style.display = 'none'; }
+    function updateCartBar() {
+        const items = Object.values(cart);
+        const total = items.reduce((sum, i) => sum + (i.p * i.q), 0);
+        const bar = document.getElementById('cart-bar');
+        if (total > 0) {
+            bar.classList.add('active');
+            document.getElementById('txt-items-count').innerText = `${items.length} ${i18n[lang].items}`;
+            document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
+        } else bar.classList.remove('active');
+    }
 
-function handleSearch() {
-    const q = document.getElementById('search-input').value.toLowerCase();
-    document.querySelectorAll('.product-card').forEach(c => {
-        const h3 = c.querySelector('h3');
-        if (h3) c.style.display = h3.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
-    });
-}
+    window.openDrawer = () => { document.getElementById('cart-drawer').style.display = 'flex'; renderDrawer(); };
+    window.closeDrawer = () => { document.getElementById('cart-drawer').style.display = 'none'; };
 
-function submitOrder() {
-    const name = document.getElementById('f-name');
-    const phone = document.getElementById('f-phone');
-    const addr = document.getElementById('f-addr');
-    let hasError = false;
-    [name, phone, addr].forEach(el => {
-        if (!el.value.trim()) { el.classList.add('error'); hasError = true; }
-        else { el.classList.remove('error'); }
-    });
-    if (hasError) return;
-    
-    const orderItems = Object.entries(cart).map(([id, q]) => {
-        const p = products.find(x => x.id == id);
-        return { name: p.ru.n, quantity: q, price: p.price };
-    });
-    const total = orderItems.reduce((s, i) => s + (i.price * i.quantity), 0);
-    tg.sendData(JSON.stringify({customer: {name: name.value, phone: phone.value, address: addr.value}, items: orderItems, total: total.toFixed(2)}));
-}
+    function renderDrawer() {
+        const cont = document.getElementById('drawer-items');
+        cont.innerHTML = Object.entries(cart).map(([id, item]) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:var(--card-bg); padding:10px; border-radius:12px;">
+                <div><b>${item.n}</b><br><small>${item.p} ₼</small></div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button onclick="updateCount('${id}', -1, '${item.n}', ${item.p})" style="width:30px;height:30px;border-radius:8px;border:none;background:#333;color:#fff">-</button>
+                    <b>${item.q}</b>
+                    <button onclick="updateCount('${id}', 1, '${item.n}', ${item.p})" style="width:30px;height:30px;border-radius:8px;border:none;background:var(--accent);color:#000">+</button>
+                </div>
+            </div>
+        `).join('');
+    }
 
-// Запуск
-window.onload = () => {
+    window.submitOrder = async () => {
+        const fName = document.getElementById('f-name');
+        const fPhone = document.getElementById('f-phone');
+        const fAddr = document.getElementById('f-addr');
+
+        let valid = true;
+        
+        // Проверка имени
+        if(!fName.value.trim()) { fName.classList.add('error'); valid = false; } else { fName.classList.remove('error'); }
+        
+        // Проверка адреса
+        if(!fAddr.value.trim()) { fAddr.classList.add('error'); valid = false; } else { fAddr.classList.remove('error'); }
+        
+        // Проверка телефона (+994 (XX) XXX-XX-XX) -> 19 символов
+        if(fPhone.value.length < 19) { fPhone.classList.add('error'); valid = false; } else { fPhone.classList.remove('error'); }
+
+        if(!valid) {
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            return;
+        }
+
+        const order = {
+            customer: { name: fName.value, phone: fPhone.value, addr: fAddr.value },
+            items: Object.values(cart),
+            total: Object.values(cart).reduce((sum, i) => sum + (i.p * i.q), 0),
+            status: 'new',
+            createdAt: Date.now()
+        };
+
+        try {
+            await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'orders'), order);
+            alert(lang === 'ru' ? "Заказ принят!" : "Sifariş qəbul edildi!");
+            cart = {};
+            closeDrawer();
+            updateCartBar();
+            renderProducts();
+            fName.value = ""; fPhone.value = "+994"; fAddr.value = "";
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    function animateFly(id) {
+        const img = document.getElementById(`img-${id}`);
+        if(!img) return;
+        const rect = img.getBoundingClientRect();
+        const flyer = img.cloneNode();
+        flyer.classList.add('fly-item');
+        flyer.style.top = rect.top + 'px';
+        flyer.style.left = rect.left + 'px';
+        flyer.style.width = rect.width + 'px';
+        document.body.appendChild(flyer);
+        setTimeout(() => {
+            flyer.style.top = (window.innerHeight - 50) + 'px';
+            flyer.style.left = '50%';
+            flyer.style.width = '20px';
+            flyer.style.opacity = '0';
+            setTimeout(() => flyer.remove(), 900);
+        }, 10);
+    }
+
     changeLang('ru');
-    initAds();
-};
 </script>
 </body>
 </html>
