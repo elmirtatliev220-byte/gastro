@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gastro Gold V1.0.6</title>
+    <title>Gastro Gold V1.0.7</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -174,9 +174,6 @@
             border: 1px solid var(--border);
         }
         .cart-bar.active { display: flex; animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .cart-bar.pulse { animation: barPulse 0.3s ease; }
-
-        @keyframes barPulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
 
         .checkout-btn {
             background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
@@ -196,7 +193,6 @@
             background: var(--accent-yellow); color: #000;
             font-size: 10px; font-weight: 900; padding: 3px 8px;
             border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         #cart-drawer {
@@ -219,7 +215,10 @@
             color: var(--accent-red); border: 1px dashed var(--accent-red);
             padding: 12px; border-radius: 16px; margin-bottom: 12px;
             font-size: 11px; font-weight: 800; cursor: pointer;
+            transition: all 0.2s;
         }
+        .location-btn:active { background: rgba(230, 57, 70, 0.1); transform: scale(0.98); }
+        .location-btn.loading { opacity: 0.5; pointer-events: none; }
 
         .cart-item-controls { display: flex; align-items: center; gap: 12px; }
     </style>
@@ -230,7 +229,7 @@
     <div class="top-bar">
         <div>
             <div class="logo">GASTRO<br><span>GOLD</span></div>
-            <div class="app-version">BUILD V1.0.6</div>
+            <div class="app-version">BUILD V1.0.7</div>
         </div>
         <div style="display: flex; gap: 5px; background: rgba(230, 57, 70, 0.05); padding: 4px; border-radius: 14px;">
             <button class="cat-btn" id="lang-ru" onclick="changeLang('ru')">RU</button>
@@ -274,8 +273,8 @@
     <div class="form-group mb-4">
         <input type="text" class="modern" id="f-name" placeholder="Имя">
         <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__" maxlength="19">
-        <button class="location-btn w-full unbounded" onclick="getLocation()">
-            📍 <span id="txt-location-btn">МОЕ МЕСТОПОЛОЖЕНИЕ</span>
+        <button class="location-btn w-full unbounded" id="btn-geo" onclick="getLocation()">
+            📍 <span id="txt-geo">МОЕ МЕСТОПОЛОЖЕНИЕ</span>
         </button>
         <input type="text" class="modern" id="f-addr" placeholder="Адрес доставки">
     </div>
@@ -283,7 +282,7 @@
 </div>
 
 <script type="module">
-    console.log("GASTRO GOLD APP LOADED: V1.0.6 (Fixing Order Sending)");
+    console.log("GASTRO GOLD APP LOADED: V1.0.7 (Geo Fix)");
 
     let products = [
         { id: '1', cat: 'burger', price: 14.5, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
@@ -303,8 +302,8 @@
     const tg = window.Telegram.WebApp;
 
     const i18n = {
-        ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", name: "Имя", total: "ИТОГО:", loc_btn: "МОЕ МЕСТОПОЛОЖЕНИЕ" },
-        az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", name: "Ad", total: "CƏM:", loc_btn: "MƏNİM MƏKANIM" }
+        ru: { items: "ТОВАРОВ", order: "ОФОРМИТЬ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", name: "Имя", total: "ИТОГО:", geo_btn: "МОЕ МЕСТОПОЛОЖЕНИЕ", geo_wait: "ПОИСК...", geo_err: "ГЕО ЗАПРЕЩЕНО" },
+        az: { items: "MƏHSUL", order: "SİFARİŞ", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", name: "Ad", total: "CƏM:", geo_btn: "MƏNİM MƏKANIM", geo_wait: "AXTARILIR...", geo_err: "İCAZƏ VERİLMƏDİ" }
     };
 
     function init() {
@@ -393,13 +392,46 @@
         });
     }
 
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ГЕОЛОКАЦИИ
     window.getLocation = () => {
-        navigator.geolocation.getCurrentPosition((p) => {
-            document.getElementById('f-addr').value = `https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
-        });
+        const btn = document.getElementById('btn-geo');
+        const txt = document.getElementById('txt-geo');
+        const addrField = document.getElementById('f-addr');
+
+        if (!navigator.geolocation) {
+            tg.showAlert("GPS не поддерживается вашим устройством");
+            return;
+        }
+
+        btn.classList.add('loading');
+        txt.innerText = i18n[lang].geo_wait;
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                addrField.value = `📍 https://www.google.com/maps?q=${lat},${lon}`;
+                
+                txt.innerText = i18n[lang].geo_btn;
+                btn.classList.remove('loading');
+                tg.HapticFeedback.notificationOccurred('success');
+            },
+            (err) => {
+                console.error(err);
+                txt.innerText = i18n[lang].geo_err;
+                btn.classList.remove('loading');
+                tg.HapticFeedback.notificationOccurred('error');
+                
+                let msg = "Ошибка доступа к GPS. Пожалуйста, разрешите доступ в настройках телефона.";
+                if (err.code === 1) msg = "Вы отклонили запрос на определение местоположения.";
+                tg.showAlert(msg);
+                
+                setTimeout(() => { txt.innerText = i18n[lang].geo_btn; }, 3000);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     };
 
-    // ГЛАВНАЯ ФУНКЦИЯ ДЛЯ ОТПРАВКИ БОТУ
     window.submitOrder = () => {
         const name = document.getElementById('f-name').value;
         const phone = document.getElementById('f-phone').value;
@@ -424,9 +456,21 @@
             total: total.toFixed(2) + " ₼"
         };
 
-        // ЭТОТ МЕТОД ОТПРАВЛЯЕТ ДАННЫЕ В ВАШ PYTHON КОД (message.web_app_data)
         tg.sendData(JSON.stringify(orderData)); 
         tg.close();
+    };
+
+    window.changeLang = (l) => {
+        lang = l;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('lang-' + l).classList.add('active');
+        document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
+        document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
+        document.getElementById('txt-total-label').innerText = i18n[lang].total;
+        document.getElementById('txt-geo').innerText = i18n[lang].geo_btn;
+        renderCategories();
+        renderProducts();
+        updateCartBar();
     };
 
     init();
