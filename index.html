@@ -356,7 +356,7 @@
 
     let products = [
         { id: '1', cat: 'burger', price: 14.5, icon: '🍔', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер, фирменный соус"}, az: {n: "Gold Burqer", d: "Praym ət, çedder, xüsusi sous"} },
-        { id: '2', cat: 'burger', price: 12.0, icon: '🍔', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль, свежие овощи"}, az: {n: "Çiken Lüks", d: "Toyuq qril, təzə tərəvəzlər"} },
+        { id: '2', cat: 'burger', price: 12.0, icon: '🍔', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль, свежие овощи"}, az: {n: "Çiken Lüks", d: "Toyuq qril, təзə tərəvəzlər"} },
         { id: '3', cat: 'pizza', price: 18.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Классика с томатами и моцареллой"}, az: {n: "Marqarita", d: "Pomidor və mosarella ilə klassika"} },
         { id: '4', cat: 'pizza', price: 21.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?w=400', ru: {n: "Пепперони", d: "Острая салями, много сыра"}, az: {n: "Pepperoni", d: "Acılı salyami, bol pendir"} },
         { id: '5', cat: 'sides', price: 5.5, icon: '🍟', img: 'https://images.unsplash.com/photo-1573015613135-a419014b2c49?w=400', ru: {n: "Картофель Фри", d: "Крупная соль, соус"}, az: {n: "Kartof Fri", d: "İri duz, sous"} },
@@ -410,7 +410,6 @@
         
         const mask = (val) => {
             let x = val.replace(/\D/g, '');
-            // Если номер начинается с 994, вырезаем его, так как он зашит в префикс
             if (x.startsWith('994')) x = x.substring(3);
             
             let res = '+994';
@@ -423,13 +422,11 @@
 
         phoneInput.addEventListener('input', (e) => {
             let val = e.target.value;
-            // Всегда держим +994
             if (!val.startsWith('+994')) val = '+994' + val;
             e.target.value = mask(val);
         });
 
         phoneInput.addEventListener('keydown', (e) => {
-            // Запрет удаления префикса бэкспейсом
             if (e.key === 'Backspace' && phoneInput.value.length <= 4) {
                 e.preventDefault();
             }
@@ -477,20 +474,17 @@
         if(!p) return;
         const modal = document.getElementById('product-modal');
         document.getElementById('modal-img').src = p.img;
-        document.getElementById('modal-img').alt = p[lang].n;
         document.getElementById('modal-title').innerText = p[lang].n;
         document.getElementById('modal-desc').innerText = p[lang].d;
         document.getElementById('modal-price').innerText = `${p.price.toFixed(2)} ₼`;
         document.getElementById('modal-add-btn').innerText = i18n[lang].addBtn;
         
-        // Исправлено: при добавлении из модалки обновляем все UI
         document.getElementById('modal-add-btn').onclick = () => { 
             handleAddToCart(id, null); 
             closeProductModal(); 
         };
 
         modal.style.display = 'flex';
-        // Небольшая задержка для анимации
         setTimeout(() => {
             modal.querySelector('.modal-content').style.transform = 'translateY(0)';
         }, 10);
@@ -515,7 +509,6 @@
         
         cart[id] = (cart[id] || 0) + 1;
         
-        // Полное обновление UI
         updateCartUI(); 
         renderProducts(); 
         
@@ -568,11 +561,9 @@
             if(total < MIN_ORDER_SUM) {
                 msg.innerText = `${i18n[lang].more} ${(MIN_ORDER_SUM - total).toFixed(2)} ₼`;
                 btn.disabled = true;
-                btn.style.opacity = '0.5';
             } else { 
                 msg.innerText = ''; 
                 btn.disabled = false; 
-                btn.style.opacity = '1';
             }
         } else { 
             bar.classList.remove('active'); 
@@ -584,20 +575,17 @@
         renderDrawerItems(); 
         renderUpsell(); 
         updateLangUI();
-        // Сброс прокрутки при открытии
         document.getElementById('drawer-scroll-area').scrollTop = 0;
     };
 
-    window.closeDrawer = () => { 
-        document.getElementById('cart-drawer').style.display = 'none'; 
-    };
+    window.closeDrawer = () => { document.getElementById('cart-drawer').style.display = 'none'; };
 
     function renderDrawerItems() {
         const container = document.getElementById('drawer-items');
         const cartIds = Object.keys(cart);
         
         if (cartIds.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-400 py-10">Корзина пуста</p>`;
+            container.innerHTML = `<p class="text-center text-gray-400 py-10">Səbət boşdur</p>`;
             return;
         }
 
@@ -606,7 +594,7 @@
             if(!p) return '';
             return `
                 <div class="flex items-center gap-4 bg-white p-3 rounded-2xl border border-[var(--border)]">
-                    <img src="${p.img}" class="w-14 h-14 rounded-xl object-cover" alt="${p[lang].n}">
+                    <img src="${p.img}" class="w-14 h-14 rounded-xl object-cover">
                     <div class="flex-grow">
                         <h4 class="font-bold text-[13px] uppercase">${p[lang].n}</h4>
                         <span class="text-xs text-orange-500 font-black">${p.price.toFixed(2)} ₼</span>
@@ -622,9 +610,7 @@
         
         const total = calculateTotal();
         document.getElementById('txt-footer-total-val').innerText = `${total.toFixed(2)} ₼`;
-        
-        const confirmBtn = document.getElementById('confirm-btn');
-        confirmBtn.disabled = total < MIN_ORDER_SUM;
+        document.getElementById('confirm-btn').disabled = total < MIN_ORDER_SUM;
     }
 
     function renderUpsell() {
@@ -637,7 +623,7 @@
         document.getElementById('upsell-section').style.display = 'block';
         list.innerHTML = drinks.map(p => `
             <div class="upsell-card" onclick="handleAddToCart('${p.id}', event)">
-                <img src="${p.img}" class="w-12 h-12 mx-auto rounded-full object-cover mb-2 shadow-sm" alt="${p[lang].n}">
+                <img src="${p.img}" class="w-12 h-12 mx-auto rounded-full object-cover mb-2 shadow-sm">
                 <p class="text-[9px] font-bold truncate">${p[lang].n}</p>
                 <p class="text-[10px] text-orange-500 font-black">+${p.price.toFixed(2)} ₼</p>
             </div>
@@ -645,32 +631,18 @@
     }
 
     window.updateQty = (id, delta) => {
-        if (isClicking) return;
-        isClicking = true;
-        setTimeout(() => isClicking = false, 150);
-
         if(!cart[id]) return;
         cart[id] += delta; 
         if(cart[id] <= 0) delete cart[id];
-        
-        updateCartUI(); 
-        renderDrawerItems(); 
-        renderProducts(); 
-        renderUpsell();
-        
+        updateCartUI(); renderDrawerItems(); renderProducts(); renderUpsell();
         if(Object.keys(cart).length === 0) closeDrawer();
         if(tg) tg.HapticFeedback.impactOccurred('light');
     };
 
     window.changeLang = (l) => {
-        lang = l; 
-        renderCategories(); 
-        renderProducts(); 
-        updateLangUI(); 
-        updateCartUI();
+        lang = l; renderCategories(); renderProducts(); updateLangUI(); updateCartUI();
         if(document.getElementById('cart-drawer').style.display === 'flex') {
-            renderDrawerItems();
-            renderUpsell();
+            renderDrawerItems(); renderUpsell();
         }
     };
 
@@ -690,16 +662,12 @@
         document.getElementById('txt-scroll-msg').innerText = i18n[lang].scrollMsg;
     }
 
+    // НОВАЯ ЛОГИКА ОТПРАВКИ ДАННЫХ В БОТА
     window.submitOrder = () => {
-        if (isClicking) return;
-        isClicking = true;
-        setTimeout(() => isClicking = false, 200);
-
         const n = document.getElementById('f-name');
         const p = document.getElementById('f-phone');
         const a = document.getElementById('f-addr');
         
-        // Валидация
         let hasError = false;
         if(!n.value) { n.classList.add('highlight'); hasError = true; }
         if(p.value.length < 19) { p.classList.add('highlight'); hasError = true; }
@@ -707,39 +675,40 @@
 
         if(hasError) {
             document.getElementById('delivery-form-section').scrollIntoView({ behavior: 'smooth' });
-            setTimeout(() => {
-                [n, p, a].forEach(i => i.classList.remove('highlight'));
-            }, 2000);
+            setTimeout(() => { [n, p, a].forEach(i => i.classList.remove('highlight')); }, 2000);
             if(tg) tg.HapticFeedback.notificationOccurred('error'); 
             return;
         }
 
-        // Очистка и завершение
-        const total = calculateTotal();
+        const cartItems = Object.keys(cart).map(id => {
+            const prod = products.find(x => x.id === id);
+            return {
+                name: prod[lang].n,
+                qty: cart[id],
+                price: prod.price,
+                total: (prod.price * cart[id]).toFixed(2)
+            };
+        });
+
         const orderData = {
-            user: n.value,
-            phone: p.value,
-            address: a.value,
-            comment: document.getElementById('f-comment').value,
-            items: cart,
-            total: total
+            customer: {
+                name: n.value,
+                phone: p.value,
+                address: a.value,
+                comment: document.getElementById('f-comment').value
+            },
+            items: cartItems,
+            totalPrice: calculateTotal().toFixed(2) + ' ₼',
+            language: lang
         };
 
-        // В реальном приложении здесь был бы tg.sendData(JSON.stringify(orderData));
-        
-        cart = {};
-        updateCartUI();
-        renderProducts();
-        closeDrawer();
-        
-        n.value = ''; p.value = '+994'; a.value = ''; 
-        document.getElementById('f-comment').value = '';
-
         if(tg) {
-            tg.HapticFeedback.notificationOccurred('success'); 
+            tg.sendData(JSON.stringify(orderData));
+            tg.HapticFeedback.notificationOccurred('success');
             tg.close();
         } else {
-            alert(lang === 'ru' ? 'Заказ успешно оформлен!' : 'Sifarişiniz qəbul olundu!');
+            console.log("Order Data:", orderData);
+            alert("Order sent! (Debug mode)");
         }
     };
 </script>
