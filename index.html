@@ -29,6 +29,8 @@
             overflow-x: hidden;
             -webkit-user-select: none;
             padding-bottom: 140px;
+            /* Учет безопасной зоны iPhone */
+            padding-bottom: calc(140px + env(safe-area-inset-bottom));
         }
 
         h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
@@ -97,7 +99,6 @@
             width: 100%; aspect-ratio: 1; border-radius: 18px; object-fit: cover; margin-bottom: 10px;
             background: #f0f0f0; transition: transform 0.5s ease;
         }
-        .product-card:hover .product-img { transform: scale(1.05); }
 
         #product-modal {
             position: fixed; inset: 0; z-index: 3000;
@@ -150,6 +151,7 @@
             display: none; flex-direction: column; padding: 12px 10px 12px 20px;
             z-index: 1000;
             box-shadow: 0 15px 40px rgba(230, 57, 70, 0.15); border: 1px solid var(--border);
+            padding-bottom: calc(12px + env(safe-area-inset-bottom) / 2);
         }
         .cart-bar.active { display: flex; animation: drawerUp 0.3s ease-out; }
 
@@ -170,10 +172,11 @@
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .checkout-btn:disabled {
-            background: #e0e0e0;
-            color: #9e9e9e;
+            background: #e0e0e0 !important;
+            color: #9e9e9e !important;
             transform: scale(1) !important;
-            box-shadow: none;
+            box-shadow: none !important;
+            opacity: 0.7;
         }
 
         #cart-drawer {
@@ -198,6 +201,7 @@
             border-top: 1px solid var(--border);
             box-shadow: 0 -10px 25px rgba(0,0,0,0.03);
             flex-shrink: 0;
+            padding-bottom: calc(30px + env(safe-area-inset-bottom));
         }
 
         .upsell-card {
@@ -247,6 +251,9 @@
             display: none; align-items: center; justify-content: center; gap: 8px;
             animation: pulse 1.5s infinite;
         }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body onload="init()">
@@ -268,7 +275,7 @@
     <div class="carousel-track" id="carousel-track"></div>
 </div>
 
-<div class="categories" id="cat-scroll"></div>
+<div class="categories no-scrollbar" id="cat-scroll"></div>
 
 <div class="content p-4">
     <div class="grid grid-cols-2 gap-3" id="product-grid"></div>
@@ -277,7 +284,7 @@
 <div id="product-modal" onclick="closeProductModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4 flex-shrink-0"></div>
-        <img id="modal-img" src="" alt="Product">
+        <img id="modal-img" src="" alt="Изображение товара">
         
         <div class="modal-info">
             <div class="flex justify-between items-start mb-2">
@@ -313,13 +320,13 @@
         <button onclick="closeDrawer()" class="bg-white w-10 h-10 rounded-full border border-[var(--border)] shadow-sm flex items-center justify-center">✕</button>
     </div>
     
-    <div class="drawer-content" id="drawer-scroll-area">
+    <div class="drawer-content no-scrollbar" id="drawer-scroll-area">
         <div id="drawer-items" class="space-y-2 py-2"></div>
         <div id="upsell-section" class="mt-8 mb-4">
             <h3 class="text-[10px] font-black text-gray-400 uppercase mb-4 px-1" id="txt-upsell-title">Часто заказывают</h3>
             <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2" id="upsell-list"></div>
         </div>
-        <div class="scroll-down-hint" id="txt-scroll-hint">
+        <div class="scroll-down-hint" id="txt-scroll-hint" style="display: flex;">
             👇 <span id="txt-scroll-msg">ПРОЛИСТАЙТЕ ДЛЯ ЗАПОЛНЕНИЯ АДРЕСА</span> 👇
         </div>
         <div class="mt-4 mb-4 p-5 bg-white rounded-3xl border border-[var(--border)] shadow-sm" id="delivery-form-section">
@@ -345,6 +352,8 @@
 
 <script>
     const MIN_ORDER_SUM = 5.50;
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+
     let products = [
         { id: '1', cat: 'burger', price: 14.5, icon: '🍔', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер, фирменный соус"}, az: {n: "Gold Burqer", d: "Praym ət, çedder, xüsusi sous"} },
         { id: '2', cat: 'burger', price: 12.0, icon: '🍔', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль, свежие овощи"}, az: {n: "Çiken Lüks", d: "Toyuq qril, təzə tərəvəzlər"} },
@@ -362,7 +371,7 @@
         { id: '14', cat: 'pizza', price: 20.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400', ru: {n: "Гавайская", d: "Ананасы, курица"}, az: {n: "Havay Pizzası", d: "Ananas, toyuq"} },
         { id: '15', cat: 'sides', price: 8.5, icon: '🍗', img: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400', ru: {n: "Крылышки", d: "Острые баффало"}, az: {n: "Toyuq Qanadları", d: "Acılı baffalo"} },
         { id: '16', cat: 'sides', price: 4.0, icon: '🧅', img: 'https://images.unsplash.com/photo-1630384066255-4427b59ba5a4?w=400', ru: {n: "Луковые кольца", d: "В хрустящей панировке"}, az: {n: "Soğan halqaları", d: "Xırtıldayan suxarı"} },
-        { id: '17', cat: 'drinks', price: 3.5, icon: '🍊', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400', ru: {n: "Апельсин. сок", d: "0.4л свежевыжатый"}, az: {n: "Portaqal şirəsi", d: "0.4l təzə"} },
+        { id: '17', cat: 'drinks', price: 3.5, icon: '🍊', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400', ru: {n: "Апельсин. сок", d: "0.4л свежевыжатый"}, az: {n: "Portaqal şirəsi", d: "0.4l təзə"} },
         { id: '18', cat: 'drinks', price: 2.0, icon: '💧', img: 'https://images.unsplash.com/photo-1544145945-f904253d0c71?w=400', ru: {n: "Вода", d: "Без газа 0.5л"}, az: {n: "Su", d: "Qazsın 0.5l"} },
         { id: '19', cat: 'burger', price: 11.5, icon: '🍔', img: 'https://images.unsplash.com/photo-1513185158878-8d8c182b013f?w=400', ru: {n: "Мини Бургер", d: "Для легкого перекуса"}, az: {n: "Mini Burqer", d: "Yüngül qəlyanaltı"} },
         { id: '20', cat: 'pizza', price: 25.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=400', ru: {n: "Мясная Пицца", d: "Ассорти из 4 видов мяса"}, az: {n: "Ətli Pizza", d: "4 növ əт assorti"} }
@@ -374,20 +383,21 @@
     ];
 
     let cart = {}; let lang = 'ru'; let activeCat = 'all';
-    const tg = window.Telegram.WebApp;
+    let isClicking = false;
 
     const i18n = {
         ru: { items: "ТОВАРОВ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", checkout: "ОФОРМИТЬ", addr: "Адрес доставки", name: "Имя", comment: "Дополнения к заказу...", totalLabel: "ИТОГО К ОПЛАТЕ:", cash: "💵 ОПЛАТА ТОЛЬКО НАЛИЧНЫМИ", formTitle: "ДАННЫЕ ДОСТАВКИ", more: "Добавьте еще", upsell: "Часто заказывают", scrollMsg: "ПРОЛИСТАЙТЕ ДЛЯ ЗАПОЛНЕНИЯ АДРЕСА", addBtn: "Добавить в корзину" },
-        az: { items: "MƏHSUL", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", checkout: "SİFARİŞ ET", addr: "Çatdırılma ünvanı", name: "Ad", comment: "Sifariş üçün əlavələr...", totalLabel: "CƏMİ ÖDƏNİŞ:", cash: "💵 ANCAQ NAĞD ÖDƏNİŞ", formTitle: "ÇATDIRILMA MƏLUMATI", more: "Əlavə edin", upsell: "Tez-tez sifariş edilir", scrollMsg: "ÜNVANI DOLDURMAQ ÜÇÜN AŞAĞI ENİN", addBtn: "Səbətə əlavə et" }
+        az: { items: "MƏHSUL", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", checkout: "SİFARİŞ ET", addr: "Çatdırılma ünvanı", name: "Ad", comment: "Sifariş üçün əlavələr...", totalLabel: "CƏMİ ÖDƏNİŞ:", cash: "💵 ANCAQ NAĞD ÖDƏNİŞ", formTitle: "ÇATDIRILMA MƏLUMATI", more: "Əlavə edin", upsell: "Tez-tez sifariş edilir", scrollMsg: "ÜNVANI DOLDURMAQ ÜÇÜN AŞAĞI ENİN", addBtn: "Səbətə əлавə et" }
     };
 
     function init() {
-        renderCarousel(); renderCategories(); renderProducts(); setupPhoneMask(); updateLangUI(); tg.ready(); tg.expand();
+        renderCarousel(); renderCategories(); renderProducts(); setupPhoneMask(); updateLangUI(); 
+        if(tg) { tg.ready(); tg.expand(); }
     }
 
     function renderCarousel() {
         const track = document.getElementById('carousel-track');
-        track.innerHTML = ads.map((ad, i) => `<div class="carousel-slide ${i === 0 ? 'active' : ''}"><img src="${ad.img}"></div>`).join('');
+        track.innerHTML = ads.map((ad, i) => `<div class="carousel-slide ${i === 0 ? 'active' : ''}"><img src="${ad.img}" alt="Рекламный баннер"></div>`).join('');
         let current = 0;
         setInterval(() => {
             const slides = document.querySelectorAll('.carousel-slide'); if(slides.length === 0) return;
@@ -396,10 +406,37 @@
     }
 
     function setupPhoneMask() {
-        document.getElementById('f-phone').addEventListener('input', (e) => {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
-            if (!x[1]) { e.target.value = '+994'; return; }
-            e.target.value = `+994 (${x[2] || ''}) ${x[3] || ''}-${x[4] || ''}-${x[5] || ''}`.replace(/-+$/, '').replace(/\( \)/, '');
+        const phoneInput = document.getElementById('f-phone');
+        
+        const mask = (val) => {
+            let x = val.replace(/\D/g, '');
+            // Если номер начинается с 994, вырезаем его, так как он зашит в префикс
+            if (x.startsWith('994')) x = x.substring(3);
+            
+            let res = '+994';
+            if (x.length > 0) res += ' (' + x.substring(0, 2);
+            if (x.length > 2) res += ') ' + x.substring(2, 5);
+            if (x.length > 5) res += '-' + x.substring(5, 7);
+            if (x.length > 7) res += '-' + x.substring(7, 9);
+            return res;
+        };
+
+        phoneInput.addEventListener('input', (e) => {
+            let val = e.target.value;
+            // Всегда держим +994
+            if (!val.startsWith('+994')) val = '+994' + val;
+            e.target.value = mask(val);
+        });
+
+        phoneInput.addEventListener('keydown', (e) => {
+            // Запрет удаления префикса бэкспейсом
+            if (e.key === 'Backspace' && phoneInput.value.length <= 4) {
+                e.preventDefault();
+            }
+        });
+        
+        phoneInput.addEventListener('focus', () => {
+            if (phoneInput.value === '') phoneInput.value = '+994';
         });
     }
 
@@ -413,7 +450,8 @@
     }
 
     window.setCat = (k) => {
-        activeCat = k; renderCategories(); renderProducts(); tg.HapticFeedback.selectionChanged();
+        activeCat = k; renderCategories(); renderProducts(); 
+        if(tg) tg.HapticFeedback.selectionChanged();
     };
 
     function renderProducts() {
@@ -424,7 +462,7 @@
             return `
             <div class="product-card" onclick="showProductDetails('${p.id}')">
                 ${count > 0 ? `<div class="badge">${count}</div>` : ''}
-                <img src="${p.img}" class="product-img">
+                <img src="${p.img}" class="product-img" alt="${p[lang].n}">
                 <h4 class="font-extrabold text-[12px] truncate uppercase">${p[lang].n}</h4>
                 <div class="flex justify-between items-center mt-2">
                     <span class="font-black text-orange-500 text-xs">${p.price.toFixed(2)} ₼</span>
@@ -436,84 +474,139 @@
 
     window.showProductDetails = (id) => {
         const p = products.find(x => x.id === id);
+        if(!p) return;
+        const modal = document.getElementById('product-modal');
         document.getElementById('modal-img').src = p.img;
+        document.getElementById('modal-img').alt = p[lang].n;
         document.getElementById('modal-title').innerText = p[lang].n;
         document.getElementById('modal-desc').innerText = p[lang].d;
         document.getElementById('modal-price').innerText = `${p.price.toFixed(2)} ₼`;
         document.getElementById('modal-add-btn').innerText = i18n[lang].addBtn;
-        document.getElementById('modal-add-btn').onclick = () => { handleAddToCart(id); closeProductModal(); };
-        const modal = document.getElementById('product-modal');
+        
+        // Исправлено: при добавлении из модалки обновляем все UI
+        document.getElementById('modal-add-btn').onclick = () => { 
+            handleAddToCart(id, null); 
+            closeProductModal(); 
+        };
+
         modal.style.display = 'flex';
-        setTimeout(() => modal.querySelector('.modal-content').style.transform = 'translateY(0)', 10);
+        // Небольшая задержка для анимации
+        setTimeout(() => {
+            modal.querySelector('.modal-content').style.transform = 'translateY(0)';
+        }, 10);
     };
 
     window.closeProductModal = () => {
         const modal = document.getElementById('product-modal');
-        modal.querySelector('.modal-content').style.transform = 'translateY(100%)';
-        setTimeout(() => modal.style.display = 'none', 300);
+        const content = modal.querySelector('.modal-content');
+        content.style.transform = 'translateY(100%)';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
     };
 
     window.handleAddToCart = (id, event) => {
-        if(event) { event.stopPropagation(); flyToCart(event); }
-        cart[id] = (cart[id] || 0) + 1;
-        updateCartUI(); renderProducts(); 
+        if(event) { event.stopPropagation(); }
+        if (isClicking) return;
+        isClicking = true;
+        setTimeout(() => isClicking = false, 150);
+
+        if(event) { flyToCart(event); }
         
-        // Если корзина открыта, перерисовываем её содержимое
+        cart[id] = (cart[id] || 0) + 1;
+        
+        // Полное обновление UI
+        updateCartUI(); 
+        renderProducts(); 
+        
         if(document.getElementById('cart-drawer').style.display === 'flex') {
             renderDrawerItems();
             renderUpsell();
         }
         
-        tg.HapticFeedback.impactOccurred('medium');
+        if(tg) tg.HapticFeedback.impactOccurred('medium');
     };
 
     function flyToCart(e) {
+        if (!e) return;
         const fly = document.createElement('div');
         fly.className = 'fly-item'; fly.innerHTML = '✨';
         fly.style.left = e.clientX + 'px'; fly.style.top = e.clientY + 'px';
         document.body.appendChild(fly);
         const target = document.getElementById('cart-bar').getBoundingClientRect();
         setTimeout(() => {
-            fly.style.left = target.left + (target.width / 2) + 'px';
+            fly.style.left = (target.left + target.width / 2) + 'px';
             fly.style.top = target.top + 'px';
             fly.style.transform = 'scale(0.1) rotate(360deg)'; fly.style.opacity = '0';
         }, 50);
         setTimeout(() => fly.remove(), 600);
     }
 
+    function calculateTotal() {
+        return Object.keys(cart).reduce((acc, id) => {
+            const p = products.find(prod => prod.id === id);
+            return p ? acc + (p.price * cart[id]) : acc;
+        }, 0);
+    }
+
     function updateCartUI() {
         const items = Object.values(cart).reduce((a, b) => a + b, 0);
-        const total = Object.keys(cart).reduce((acc, id) => acc + (products.find(p => p.id === id).price * cart[id]), 0);
+        const total = calculateTotal();
         const bar = document.getElementById('cart-bar');
+        
         if(items > 0) {
             bar.classList.add('active');
             document.getElementById('txt-items-count').innerText = `${items} ${i18n[lang].items}`;
             document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
+            
             const percent = Math.min((total / MIN_ORDER_SUM) * 100, 100);
             document.getElementById('min-sum-progress-fill').style.width = percent + '%';
+            
             const msg = document.getElementById('min-sum-msg');
             const btn = document.getElementById('btn-checkout-main');
+            
             if(total < MIN_ORDER_SUM) {
                 msg.innerText = `${i18n[lang].more} ${(MIN_ORDER_SUM - total).toFixed(2)} ₼`;
                 btn.disabled = true;
-            } else { msg.innerText = ''; btn.disabled = false; }
-        } else { bar.classList.remove('active'); }
+                btn.style.opacity = '0.5';
+            } else { 
+                msg.innerText = ''; 
+                btn.disabled = false; 
+                btn.style.opacity = '1';
+            }
+        } else { 
+            bar.classList.remove('active'); 
+        }
     }
 
     window.openDrawer = () => {
         document.getElementById('cart-drawer').style.display = 'flex';
-        renderDrawerItems(); renderUpsell(); updateLangUI();
+        renderDrawerItems(); 
+        renderUpsell(); 
+        updateLangUI();
+        // Сброс прокрутки при открытии
+        document.getElementById('drawer-scroll-area').scrollTop = 0;
     };
 
-    window.closeDrawer = () => { document.getElementById('cart-drawer').style.display = 'none'; };
+    window.closeDrawer = () => { 
+        document.getElementById('cart-drawer').style.display = 'none'; 
+    };
 
     function renderDrawerItems() {
         const container = document.getElementById('drawer-items');
-        container.innerHTML = Object.keys(cart).map(id => {
+        const cartIds = Object.keys(cart);
+        
+        if (cartIds.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-400 py-10">Корзина пуста</p>`;
+            return;
+        }
+
+        container.innerHTML = cartIds.map(id => {
             const p = products.find(x => x.id === id);
+            if(!p) return '';
             return `
                 <div class="flex items-center gap-4 bg-white p-3 rounded-2xl border border-[var(--border)]">
-                    <img src="${p.img}" class="w-14 h-14 rounded-xl object-cover">
+                    <img src="${p.img}" class="w-14 h-14 rounded-xl object-cover" alt="${p[lang].n}">
                     <div class="flex-grow">
                         <h4 class="font-bold text-[13px] uppercase">${p[lang].n}</h4>
                         <span class="text-xs text-orange-500 font-black">${p.price.toFixed(2)} ₼</span>
@@ -526,17 +619,25 @@
                 </div>
             `;
         }).join('');
-        const total = Object.keys(cart).reduce((acc, id) => acc + (products.find(p => p.id === id).price * cart[id]), 0);
+        
+        const total = calculateTotal();
         document.getElementById('txt-footer-total-val').innerText = `${total.toFixed(2)} ₼`;
+        
+        const confirmBtn = document.getElementById('confirm-btn');
+        confirmBtn.disabled = total < MIN_ORDER_SUM;
     }
 
     function renderUpsell() {
         const drinks = products.filter(p => p.cat === 'drinks' && !cart[p.id]);
         const list = document.getElementById('upsell-list');
-        // ТЕПЕРЬ МОЖНО НАЖАТЬ НА КАРТОЧКУ И ДОБАВИТЬ
+        if (drinks.length === 0) {
+            document.getElementById('upsell-section').style.display = 'none';
+            return;
+        }
+        document.getElementById('upsell-section').style.display = 'block';
         list.innerHTML = drinks.map(p => `
-            <div class="upsell-card" onclick="handleAddToCart('${p.id}')">
-                <img src="${p.img}" class="w-12 h-12 mx-auto rounded-full object-cover mb-2 shadow-sm">
+            <div class="upsell-card" onclick="handleAddToCart('${p.id}', event)">
+                <img src="${p.img}" class="w-12 h-12 mx-auto rounded-full object-cover mb-2 shadow-sm" alt="${p[lang].n}">
                 <p class="text-[9px] font-bold truncate">${p[lang].n}</p>
                 <p class="text-[10px] text-orange-500 font-black">+${p.price.toFixed(2)} ₼</p>
             </div>
@@ -544,13 +645,33 @@
     }
 
     window.updateQty = (id, delta) => {
-        cart[id] += delta; if(cart[id] <= 0) delete cart[id];
-        updateCartUI(); renderDrawerItems(); renderProducts(); renderUpsell();
+        if (isClicking) return;
+        isClicking = true;
+        setTimeout(() => isClicking = false, 150);
+
+        if(!cart[id]) return;
+        cart[id] += delta; 
+        if(cart[id] <= 0) delete cart[id];
+        
+        updateCartUI(); 
+        renderDrawerItems(); 
+        renderProducts(); 
+        renderUpsell();
+        
         if(Object.keys(cart).length === 0) closeDrawer();
+        if(tg) tg.HapticFeedback.impactOccurred('light');
     };
 
     window.changeLang = (l) => {
-        lang = l; renderCategories(); renderProducts(); updateLangUI(); updateCartUI();
+        lang = l; 
+        renderCategories(); 
+        renderProducts(); 
+        updateLangUI(); 
+        updateCartUI();
+        if(document.getElementById('cart-drawer').style.display === 'flex') {
+            renderDrawerItems();
+            renderUpsell();
+        }
     };
 
     function updateLangUI() {
@@ -570,13 +691,56 @@
     }
 
     window.submitOrder = () => {
-        const n = document.getElementById('f-name'), p = document.getElementById('f-phone'), a = document.getElementById('f-addr');
-        if(!n.value || p.value.length < 10 || !a.value) {
+        if (isClicking) return;
+        isClicking = true;
+        setTimeout(() => isClicking = false, 200);
+
+        const n = document.getElementById('f-name');
+        const p = document.getElementById('f-phone');
+        const a = document.getElementById('f-addr');
+        
+        // Валидация
+        let hasError = false;
+        if(!n.value) { n.classList.add('highlight'); hasError = true; }
+        if(p.value.length < 19) { p.classList.add('highlight'); hasError = true; }
+        if(!a.value) { a.classList.add('highlight'); hasError = true; }
+
+        if(hasError) {
             document.getElementById('delivery-form-section').scrollIntoView({ behavior: 'smooth' });
-            [n, p, a].forEach(i => { if(!i.value) { i.classList.add('highlight'); setTimeout(() => i.classList.remove('highlight'), 2000); } });
-            tg.HapticFeedback.notificationOccurred('error'); return;
+            setTimeout(() => {
+                [n, p, a].forEach(i => i.classList.remove('highlight'));
+            }, 2000);
+            if(tg) tg.HapticFeedback.notificationOccurred('error'); 
+            return;
         }
-        tg.HapticFeedback.notificationOccurred('success'); tg.close();
+
+        // Очистка и завершение
+        const total = calculateTotal();
+        const orderData = {
+            user: n.value,
+            phone: p.value,
+            address: a.value,
+            comment: document.getElementById('f-comment').value,
+            items: cart,
+            total: total
+        };
+
+        // В реальном приложении здесь был бы tg.sendData(JSON.stringify(orderData));
+        
+        cart = {};
+        updateCartUI();
+        renderProducts();
+        closeDrawer();
+        
+        n.value = ''; p.value = '+994'; a.value = ''; 
+        document.getElementById('f-comment').value = '';
+
+        if(tg) {
+            tg.HapticFeedback.notificationOccurred('success'); 
+            tg.close();
+        } else {
+            alert(lang === 'ru' ? 'Заказ успешно оформлен!' : 'Sifarişiniz qəbul olundu!');
+        }
     };
 </script>
 </body>
