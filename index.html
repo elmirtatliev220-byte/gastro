@@ -371,7 +371,7 @@
         { id: '14', cat: 'pizza', price: 20.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400', ru: {n: "Гавайская", d: "Ананасы, курица"}, az: {n: "Havay Pizzası", d: "Ananas, toyuq"} },
         { id: '15', cat: 'sides', price: 8.5, icon: '🍗', img: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400', ru: {n: "Крылышки", d: "Острые баффало"}, az: {n: "Toyuq Qanadları", d: "Acılı baffalo"} },
         { id: '16', cat: 'sides', price: 4.0, icon: '🧅', img: 'https://images.unsplash.com/photo-1630384066255-4427b59ba5a4?w=400', ru: {n: "Луковые кольца", d: "В хрустящей панировке"}, az: {n: "Soğan halqaları", d: "Xırtıldayan suxarı"} },
-        { id: '17', cat: 'drinks', price: 3.5, icon: '🍊', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400', ru: {n: "Апельсин. сок", d: "0.4л свежевыжатый"}, az: {n: "Portaqal şirəsi", d: "0.4l təзə"} },
+        { id: '17', cat: 'drinks', price: 3.5, icon: '🍊', img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400', ru: {n: "Апельсин. сок", d: "0.4л свежевыжатый"}, az: {n: "Portaqal шirəsi", d: "0.4l təзə"} },
         { id: '18', cat: 'drinks', price: 2.0, icon: '💧', img: 'https://images.unsplash.com/photo-1544145945-f904253d0c71?w=400', ru: {n: "Вода", d: "Без газа 0.5л"}, az: {n: "Su", d: "Qazsın 0.5l"} },
         { id: '19', cat: 'burger', price: 11.5, icon: '🍔', img: 'https://images.unsplash.com/photo-1513185158878-8d8c182b013f?w=400', ru: {n: "Мини Бургер", d: "Для легкого перекуса"}, az: {n: "Mini Burqer", d: "Yüngül qəlyanaltı"} },
         { id: '20', cat: 'pizza', price: 25.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=400', ru: {n: "Мясная Пицца", d: "Ассорти из 4 видов мяса"}, az: {n: "Ətli Pizza", d: "4 növ əт assorti"} }
@@ -662,11 +662,12 @@
         document.getElementById('txt-scroll-msg').innerText = i18n[lang].scrollMsg;
     }
 
-    // НОВАЯ ЛОГИКА ОТПРАВКИ ДАННЫХ В БОТА
+    // ИСПРАВЛЕННАЯ ЛОГИКА ОТПРАВКИ ДАННЫХ
     window.submitOrder = () => {
         const n = document.getElementById('f-name');
         const p = document.getElementById('f-phone');
         const a = document.getElementById('f-addr');
+        const confirmBtn = document.getElementById('confirm-btn');
         
         let hasError = false;
         if(!n.value) { n.classList.add('highlight'); hasError = true; }
@@ -680,35 +681,48 @@
             return;
         }
 
+        // Блокируем кнопку, чтобы не было дублей
+        confirmBtn.disabled = true;
+        confirmBtn.innerText = "...";
+
+        // Senior fix: Принудительный расчет итоговой суммы прямо здесь
+        const finalTotal = calculateTotal();
+        
         const cartItems = Object.keys(cart).map(id => {
             const prod = products.find(x => x.id === id);
+            const itemQty = cart[id];
+            const itemPrice = prod.price;
             return {
                 name: prod[lang].n,
-                qty: cart[id],
-                price: prod.price,
-                total: (prod.price * cart[id]).toFixed(2)
+                qty: itemQty,
+                price: itemPrice.toFixed(2),
+                total: (itemPrice * itemQty).toFixed(2)
             };
         });
 
         const orderData = {
             customer: {
-                name: n.value,
-                phone: p.value,
-                address: a.value,
-                comment: document.getElementById('f-comment').value
+                name: n.value.trim(),
+                phone: p.value.trim(),
+                address: a.value.trim(),
+                comment: document.getElementById('f-comment').value.trim()
             },
             items: cartItems,
-            totalPrice: calculateTotal().toFixed(2) + ' ₼',
+            totalPrice: finalTotal.toFixed(2), // Отправляем как число (строкой) без символа ₼ для легкости парсинга
+            currency: "₼",
             language: lang
         };
 
         if(tg) {
+            // Важно: Бот получит этот JSON строку
             tg.sendData(JSON.stringify(orderData));
             tg.HapticFeedback.notificationOccurred('success');
             tg.close();
         } else {
-            console.log("Order Data:", orderData);
-            alert("Order sent! (Debug mode)");
+            console.log("DEBUG Order Data:", orderData);
+            alert("Order sent! Total: " + orderData.totalPrice);
+            confirmBtn.disabled = false;
+            confirmBtn.innerText = i18n[lang].confirm;
         }
     };
 </script>
