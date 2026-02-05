@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gastro Gold V1.1.9</title>
+    <title>Gastro Gold V1.2.6</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,7 +19,7 @@
             --border: rgba(230, 57, 70, 0.1);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none !important; }
         
         body {
             font-family: 'Manrope', sans-serif;
@@ -28,7 +28,7 @@
             margin: 0; padding: 0;
             overflow-x: hidden;
             -webkit-user-select: none;
-            padding-bottom: 120px;
+            padding-bottom: 140px;
         }
 
         h1, h2, h3, .unbounded { font-family: 'Unbounded', sans-serif; }
@@ -56,8 +56,9 @@
             background: var(--card-bg); border-radius: 24px; padding: 12px;
             border: 1px solid var(--border); position: relative;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-            transition: transform 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+        .product-card:active { transform: scale(0.95); }
 
         .ad-carousel {
             margin: 10px 16px 15px;
@@ -76,7 +77,7 @@
         .carousel-slide.active { opacity: 1; z-index: 10; }
         .carousel-slide img { width: 100%; height: 100%; object-fit: cover; }
 
-        .categories { display: flex; gap: 8px; overflow-x: auto; padding: 15px 20px; scrollbar-width: none; }
+        .categories { display: flex; gap: 8px; overflow-x: auto; padding: 15px 20px; scroll-behavior: smooth; }
         .categories::-webkit-scrollbar { display: none; }
         
         .cat-btn {
@@ -94,7 +95,35 @@
 
         .product-img { 
             width: 100%; aspect-ratio: 1; border-radius: 18px; object-fit: cover; margin-bottom: 10px;
-            background: #f0f0f0; transition: transform 0.3s ease;
+            background: #f0f0f0; transition: transform 0.5s ease;
+        }
+        .product-card:hover .product-img { transform: scale(1.05); }
+
+        #product-modal {
+            position: fixed; inset: 0; z-index: 3000;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+            display: none; align-items: flex-end;
+        }
+        .modal-content {
+            background: #fff; width: 100%; border-radius: 32px 32px 0 0;
+            padding: 20px; 
+            max-height: 85vh; 
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #modal-img {
+            width: 100%; 
+            max-height: 35vh; 
+            object-fit: cover; 
+            border-radius: 24px; 
+            margin-bottom: 16px;
+            flex-shrink: 1; 
+        }
+        .modal-info {
+            flex-grow: 1;
+            overflow-y: auto; 
+            margin-bottom: 20px;
         }
 
         .badge {
@@ -114,7 +143,6 @@
         }
         .btn-icon:active { transform: scale(0.9); }
         .add-btn { background: var(--accent-yellow); color: #000; }
-        .remove-btn { background: #f3f3f3; color: var(--text-dim); }
 
         .cart-bar {
             position: fixed; bottom: 25px; left: 16px; right: 16px;
@@ -139,6 +167,7 @@
             color: #fff; height: 48px; padding: 0 25px; border-radius: 16px;
             border: none; font-family: 'Unbounded'; font-size: 12px; font-weight: 700;
             transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .checkout-btn:disabled {
             background: #e0e0e0;
@@ -171,15 +200,17 @@
             flex-shrink: 0;
         }
 
+        .upsell-card {
+            min-width: 120px; background: #fff; border-radius: 20px; padding: 12px;
+            border: 1px solid var(--border); text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+        }
+        .upsell-card:active { transform: scale(0.95); background: #fdfdfd; }
+
         .cash-only-badge {
-            background: #FFF4E5;
-            color: #D68910;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 8px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 12px;
+            background: #FFF4E5; color: #D68910; font-size: 11px; font-weight: 800;
+            padding: 8px; border-radius: 12px; text-align: center; margin-bottom: 12px;
             border: 1px dashed #D68910;
         }
 
@@ -187,18 +218,12 @@
             width: 100%; background: #FDFDFD; border: 1px solid var(--border);
             border-radius: 16px; padding: 14px; color: var(--text-main);
             margin-bottom: 10px; outline: none; font-size: 14px;
-            transition: all 0.3s ease;
-            font-family: 'Manrope', sans-serif;
+            transition: all 0.3s ease; font-family: 'Manrope', sans-serif;
         }
         textarea.modern { resize: none; min-height: 60px; }
         input.modern:focus, textarea.modern:focus { border-color: var(--accent-orange); background: #fff; }
-
-        input.error {
-            border-color: var(--accent-red) !important;
-            background: #fffafa !important;
-            animation: shake 0.3s ease-in-out;
-        }
-
+        
+        input.modern.highlight { border: 2px solid var(--accent-red); background: #FFF5F5; animation: shake 0.4s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -206,19 +231,21 @@
         }
 
         .min-sum-hint {
-            font-size: 9px;
-            font-weight: 800;
-            color: var(--accent-red);
-            text-transform: uppercase;
+            font-size: 9px; font-weight: 800; color: var(--accent-red); text-transform: uppercase;
         }
 
-        /* Анимация полета товара */
         .fly-item {
-            position: fixed; width: 50px; height: 50px; border-radius: 50%;
-            background: var(--accent-yellow); z-index: 3000; pointer-events: none;
+            position: fixed; width: 40px; height: 40px; border-radius: 50%;
+            background: var(--accent-yellow); z-index: 5000; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            font-size: 20px; transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .scroll-down-hint {
+            text-align: center; color: var(--accent-orange); font-size: 10px; font-weight: 800;
+            padding: 15px; background: rgba(243, 114, 44, 0.05); border-radius: 15px; margin: 15px 0;
+            display: none; align-items: center; justify-content: center; gap: 8px;
+            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
@@ -228,7 +255,7 @@
     <div class="top-bar">
         <div>
             <div class="logo">GASTRO<br><span>GOLD</span></div>
-            <div class="app-version">BUILD V1.1.9</div>
+            <div class="app-version">BUILD V1.2.6</div>
         </div>
         <div style="display: flex; gap: 5px; background: rgba(230, 57, 70, 0.05); padding: 4px; border-radius: 14px;">
             <button class="cat-btn" id="lang-ru" onclick="changeLang('ru')">RU</button>
@@ -247,7 +274,25 @@
     <div class="grid grid-cols-2 gap-3" id="product-grid"></div>
 </div>
 
-<!-- Панель корзины с прогресс-баром -->
+<div id="product-modal" onclick="closeProductModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        <img id="modal-img" src="" alt="Product">
+        
+        <div class="modal-info">
+            <div class="flex justify-between items-start mb-2">
+                <h2 id="modal-title" class="unbounded text-lg uppercase leading-tight"></h2>
+                <span id="modal-price" class="unbounded text-md text-orange-500 whitespace-nowrap ml-2"></span>
+            </div>
+            <p id="modal-desc" class="text-gray-500 text-sm leading-snug"></p>
+        </div>
+
+        <button id="modal-add-btn" class="w-full py-4 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition flex-shrink-0">
+            Добавить в корзину
+        </button>
+    </div>
+</div>
+
 <div class="cart-bar" id="cart-bar">
     <div id="min-sum-progress-container" class="progress-container">
         <div id="min-sum-progress-fill" class="progress-fill"></div>
@@ -270,13 +315,15 @@
     
     <div class="drawer-content" id="drawer-scroll-area">
         <div id="drawer-items" class="space-y-2 py-2"></div>
-        
-        <div class="mt-8 mb-4 p-4 bg-orange-50 rounded-2xl border border-orange-100" id="delivery-form-section">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="unbounded text-[11px] text-orange-800 uppercase tracking-widest flex items-center gap-2">
-                    📍 <span id="txt-form-title">Заполните для заказа</span>
-                </h3>
-            </div>
+        <div id="upsell-section" class="mt-8 mb-4">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase mb-4 px-1" id="txt-upsell-title">Часто заказывают</h3>
+            <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2" id="upsell-list"></div>
+        </div>
+        <div class="scroll-down-hint" id="txt-scroll-hint">
+            👇 <span id="txt-scroll-msg">ПРОЛИСТАЙТЕ ДЛЯ ЗАПОЛНЕНИЯ АДРЕСА</span> 👇
+        </div>
+        <div class="mt-4 mb-4 p-5 bg-white rounded-3xl border border-[var(--border)] shadow-sm" id="delivery-form-section">
+            <h3 class="unbounded text-[12px] text-orange-500 uppercase tracking-widest mb-4">📍 <span id="txt-form-title">ДАННЫЕ ДОСТАВКИ</span></h3>
             <div class="form-group">
                 <input type="text" class="modern" id="f-name" placeholder="Имя">
                 <input type="tel" class="modern" id="f-phone" placeholder="+994 (__) ___-__-__" maxlength="19">
@@ -287,9 +334,7 @@
     </div>
 
     <div class="drawer-footer">
-        <div class="cash-only-badge" id="txt-cash-info">
-            💵 ОПЛАТА ТОЛЬКО НАЛИЧНЫМИ
-        </div>
+        <div class="cash-only-badge" id="txt-cash-info">💵 ОПЛАТА ТОЛЬКО НАЛИЧНЫМИ</div>
         <div class="flex justify-between items-center mb-4 px-1">
             <span class="text-xs font-bold text-[var(--text-dim)]" id="txt-footer-total-label">ИТОГО К ОПЛАТЕ:</span>
             <span class="unbounded text-lg font-black text-[var(--accent-red)]" id="txt-footer-total-val">0.00 ₼</span>
@@ -300,12 +345,11 @@
 
 <script>
     const MIN_ORDER_SUM = 5.50;
-
     let products = [
-        { id: '1', cat: 'burger', price: 14.5, icon: '🍔', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер"}, az: {n: "Gold Burqer", d: "Praym ət, çedder"} },
-        { id: '2', cat: 'burger', price: 12.0, icon: '🍔', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль"}, az: {n: "Çiken Lüks", d: "Toyuq qril"} },
-        { id: '3', cat: 'pizza', price: 18.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Томаты, моцарелла"}, az: {n: "Marqarita", d: "Pomidor, mosarella"} },
-        { id: '4', cat: 'pizza', price: 21.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?w=400', ru: {n: "Пепперони", d: "Острая салями"}, az: {n: "Pepperoni", d: "Acılı salyami"} },
+        { id: '1', cat: 'burger', price: 14.5, icon: '🍔', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', ru: {n: "Голд Бургер", d: "Мясо прайм, чеддер, фирменный соус"}, az: {n: "Gold Burqer", d: "Praym ət, çedder, xüsusi sous"} },
+        { id: '2', cat: 'burger', price: 12.0, icon: '🍔', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400', ru: {n: "Чикен Люкс", d: "Курица гриль, свежие овощи"}, az: {n: "Çiken Lüks", d: "Toyuq qril, təzə tərəvəzlər"} },
+        { id: '3', cat: 'pizza', price: 18.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', ru: {n: "Маргарита", d: "Классика с томатами и моцареллой"}, az: {n: "Marqarita", d: "Pomidor və mosarella ilə klassika"} },
+        { id: '4', cat: 'pizza', price: 21.0, icon: '🍕', img: 'https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?w=400', ru: {n: "Пепперони", d: "Острая салями, много сыра"}, az: {n: "Pepperoni", d: "Acılı salyami, bol pendir"} },
         { id: '5', cat: 'sides', price: 5.5, icon: '🍟', img: 'https://images.unsplash.com/photo-1573015613135-a419014b2c49?w=400', ru: {n: "Картофель Фри", d: "Крупная соль, соус"}, az: {n: "Kartof Fri", d: "İri duz, sous"} },
         { id: '6', cat: 'sides', price: 6.0, icon: '🍗', img: 'https://images.unsplash.com/photo-1541581340-374c644bcd42?w=400', ru: {n: "Наггетсы", d: "6 штук, панировка"}, az: {n: "Naggetslər", d: "6 ədəd, suxarı"} },
         { id: '7', cat: 'drinks', price: 2.5, icon: '🥤', img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400', ru: {n: "Coca-Cola", d: "0.5л холодная"}, az: {n: "Coca-Cola", d: "0.5l soyuq"} },
@@ -329,27 +373,16 @@
         { id: 'a2', img: 'https://images.unsplash.com/photo-1543353071-10c8ba85a904?w=800' }
     ];
 
-    let cart = {};
-    let lang = 'ru';
-    let activeCat = 'all';
+    let cart = {}; let lang = 'ru'; let activeCat = 'all';
     const tg = window.Telegram.WebApp;
 
     const i18n = {
-        ru: { items: "ТОВАРОВ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", checkout: "ОФОРМИТЬ", addr: "Адрес доставки", name: "Имя", comment: "Дополнения к заказу...", totalLabel: "ИТОГО К ОПЛАТЕ:", cash: "💵 ОПЛАТА ТОЛЬКО НАЛИЧНЫМИ", formTitle: "Заполните для заказа", minSum: "Минимум 5.50 ₼", more: "Добавьте еще" },
-        az: { items: "MƏHSUL", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", checkout: "SİFARİŞ ET", addr: "Çatdırılma ünvanı", name: "Ad", comment: "Sifariş üçün əlavələr...", totalLabel: "CƏMİ ÖDƏNİŞ:", cash: "💵 ANCAQ NAĞD ÖDƏNİŞ", formTitle: "Sifariş üçün doldurun", minSum: "Minimum 5.50 ₼", more: "Əlavə edin" }
+        ru: { items: "ТОВАРОВ", cart: "КОРЗИНА", confirm: "ПОДТВЕРДИТЬ", checkout: "ОФОРМИТЬ", addr: "Адрес доставки", name: "Имя", comment: "Дополнения к заказу...", totalLabel: "ИТОГО К ОПЛАТЕ:", cash: "💵 ОПЛАТА ТОЛЬКО НАЛИЧНЫМИ", formTitle: "ДАННЫЕ ДОСТАВКИ", more: "Добавьте еще", upsell: "Часто заказывают", scrollMsg: "ПРОЛИСТАЙТЕ ДЛЯ ЗАПОЛНЕНИЯ АДРЕСА", addBtn: "Добавить в корзину" },
+        az: { items: "MƏHSUL", cart: "SƏBƏT", confirm: "TƏSDİQLƏ", checkout: "SİFARİŞ ET", addr: "Çatdırılma ünvanı", name: "Ad", comment: "Sifariş üçün əlavələr...", totalLabel: "CƏMİ ÖDƏNİŞ:", cash: "💵 ANCAQ NAĞD ÖDƏNİŞ", formTitle: "ÇATDIRILMA MƏLUMATI", more: "Əlavə edin", upsell: "Tez-tez sifariş edilir", scrollMsg: "ÜNVANI DOLDURMAQ ÜÇÜN AŞAĞI ENİN", addBtn: "Səbətə əlavə et" }
     };
 
     function init() {
-        renderCarousel();
-        renderCategories();
-        renderProducts();
-        setupPhoneMask();
-        updateLangUI();
-        tg.ready();
-        tg.expand();
-        if (tg.initDataUnsafe?.user) {
-            document.getElementById('f-name').value = tg.initDataUnsafe.user.first_name || "";
-        }
+        renderCarousel(); renderCategories(); renderProducts(); setupPhoneMask(); updateLangUI(); tg.ready(); tg.expand();
     }
 
     function renderCarousel() {
@@ -357,11 +390,8 @@
         track.innerHTML = ads.map((ad, i) => `<div class="carousel-slide ${i === 0 ? 'active' : ''}"><img src="${ad.img}"></div>`).join('');
         let current = 0;
         setInterval(() => {
-            const slides = document.querySelectorAll('.carousel-slide');
-            if(slides.length === 0) return;
-            slides[current].classList.remove('active');
-            current = (current + 1) % slides.length;
-            slides[current].classList.add('active');
+            const slides = document.querySelectorAll('.carousel-slide'); if(slides.length === 0) return;
+            slides[current].classList.remove('active'); current = (current + 1) % slides.length; slides[current].classList.add('active');
         }, 4000);
     }
 
@@ -378,230 +408,177 @@
             { all: "🍽️ Все", burger: "🍔 Бургеры", pizza: "🍕 Пицца", sides: "🍟 Закуски", drinks: "🥤 Напитки" } : 
             { all: "🍽️ Hamısı", burger: "🍔 Burqer", pizza: "🍕 Pizza", sides: "🍟 Qəlyanaltı", drinks: "🥤 İçkilər" };
         document.getElementById('cat-scroll').innerHTML = Object.keys(cats).map(k => `
-            <button class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${cats[k]}</button>
+            <button id="btn-cat-${k}" class="cat-btn ${activeCat === k ? 'active' : ''}" onclick="setCat('${k}')">${cats[k]}</button>
         `).join('');
     }
 
-    window.setCat = (k) => { 
-        activeCat = k; 
-        renderCategories(); 
-        renderProducts(); 
-        tg.HapticFeedback.impactOccurred('light');
+    window.setCat = (k) => {
+        activeCat = k; renderCategories(); renderProducts(); tg.HapticFeedback.selectionChanged();
     };
 
     function renderProducts() {
         const grid = document.getElementById('product-grid');
-        grid.innerHTML = products.filter(p => activeCat === 'all' || p.cat === activeCat).map(p => {
+        const filtered = activeCat === 'all' ? products : products.filter(p => p.cat === activeCat);
+        grid.innerHTML = filtered.map(p => {
             const count = cart[p.id] || 0;
             return `
-                <div class="product-card" id="card-${p.id}">
-                    ${count > 0 ? `<div class="badge">${count}</div>` : ''}
-                    <img src="${p.img}" class="product-img" loading="lazy">
-                    <h3 class="unbounded text-[13px] font-extrabold mb-1 h-8 overflow-hidden">${p[lang].n}</h3>
-                    <p class="text-[10px] text-[var(--text-dim)] mb-2 h-7 overflow-hidden">${p[lang].d}</p>
-                    <div class="flex justify-between items-center">
-                        <div class="text-[var(--accent-red)] font-black">${p.price.toFixed(2)} ₼</div>
-                        <div class="flex items-center gap-1">
-                            ${count > 0 ? `
-                                <button class="remove-btn btn-icon !w-7 !h-7 !text-sm" onclick="updateCount('${p.id}',-1, event)">-</button>
-                            ` : ''}
-                            <button class="add-btn btn-icon !w-7 !h-7 !text-sm" onclick="updateCount('${p.id}',1, event)">+</button>
-                        </div>
-                    </div>
-                </div>`;
-        }).join('');
+            <div class="product-card" onclick="showProductDetails('${p.id}')">
+                ${count > 0 ? `<div class="badge">${count}</div>` : ''}
+                <img src="${p.img}" class="product-img">
+                <h4 class="font-extrabold text-[12px] truncate uppercase">${p[lang].n}</h4>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="font-black text-orange-500 text-xs">${p.price.toFixed(2)} ₼</span>
+                    <button onclick="handleAddToCart('${p.id}', event)" class="btn-icon add-btn">+</button>
+                </div>
+            </div>
+        `}).join('');
     }
 
-    window.updateCount = (id, delta, event) => {
-        cart[id] = (cart[id] || 0) + delta;
-        if (cart[id] <= 0) delete cart[id];
-        
-        tg.HapticFeedback.impactOccurred('light');
-        
-        // Анимация полета при добавлении
-        if (delta > 0 && event) {
-            animateFlyItem(id, event.clientX, event.clientY);
-        }
-
-        renderProducts();
-        updateCartBar();
-        
-        if (document.getElementById('cart-drawer').style.display === 'flex') {
-            refreshDrawer();
-        }
+    window.showProductDetails = (id) => {
+        const p = products.find(x => x.id === id);
+        document.getElementById('modal-img').src = p.img;
+        document.getElementById('modal-title').innerText = p[lang].n;
+        document.getElementById('modal-desc').innerText = p[lang].d;
+        document.getElementById('modal-price').innerText = `${p.price.toFixed(2)} ₼`;
+        document.getElementById('modal-add-btn').innerText = i18n[lang].addBtn;
+        document.getElementById('modal-add-btn').onclick = () => { handleAddToCart(id); closeProductModal(); };
+        const modal = document.getElementById('product-modal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.querySelector('.modal-content').style.transform = 'translateY(0)', 10);
     };
 
-    function animateFlyItem(id, startX, startY) {
-        const p = products.find(x => x.id == id);
-        const flyer = document.createElement('div');
-        flyer.className = 'fly-item';
-        flyer.innerText = p.icon || '🥡';
-        flyer.style.left = startX + 'px';
-        flyer.style.top = startY + 'px';
-        document.body.appendChild(flyer);
+    window.closeProductModal = () => {
+        const modal = document.getElementById('product-modal');
+        modal.querySelector('.modal-content').style.transform = 'translateY(100%)';
+        setTimeout(() => modal.style.display = 'none', 300);
+    };
 
+    window.handleAddToCart = (id, event) => {
+        if(event) { event.stopPropagation(); flyToCart(event); }
+        cart[id] = (cart[id] || 0) + 1;
+        updateCartUI(); renderProducts(); 
+        
+        // Если корзина открыта, перерисовываем её содержимое
+        if(document.getElementById('cart-drawer').style.display === 'flex') {
+            renderDrawerItems();
+            renderUpsell();
+        }
+        
+        tg.HapticFeedback.impactOccurred('medium');
+    };
+
+    function flyToCart(e) {
+        const fly = document.createElement('div');
+        fly.className = 'fly-item'; fly.innerHTML = '✨';
+        fly.style.left = e.clientX + 'px'; fly.style.top = e.clientY + 'px';
+        document.body.appendChild(fly);
         const target = document.getElementById('cart-bar').getBoundingClientRect();
-        
         setTimeout(() => {
-            flyer.style.left = (target.left + 30) + 'px';
-            flyer.style.top = (target.top + 20) + 'px';
-            flyer.style.transform = 'scale(0.2)';
-            flyer.style.opacity = '0';
+            fly.style.left = target.left + (target.width / 2) + 'px';
+            fly.style.top = target.top + 'px';
+            fly.style.transform = 'scale(0.1) rotate(360deg)'; fly.style.opacity = '0';
         }, 50);
-
-        setTimeout(() => flyer.remove(), 700);
+        setTimeout(() => fly.remove(), 600);
     }
 
-    function updateCartBar() {
-        const itemsCount = Object.values(cart).reduce((a,b) => a+b, 0);
-        let total = 0;
-        Object.keys(cart).forEach(id => { 
-            const p = products.find(x => x.id == id);
-            if (p) total += p.price * cart[id]; 
-        });
-        
-        const isMinMet = total >= MIN_ORDER_SUM;
-        const btnMain = document.getElementById('btn-checkout-main');
-        const btnConfirm = document.getElementById('confirm-btn');
-        const minMsg = document.getElementById('min-sum-msg');
-        const fill = document.getElementById('min-sum-progress-fill');
-
-        document.getElementById('cart-bar').classList.toggle('active', itemsCount > 0);
-        document.getElementById('txt-items-count').innerText = `${itemsCount} ${i18n[lang].items}`;
-        document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
-        document.getElementById('txt-footer-total-val').innerText = `${total.toFixed(2)} ₼`;
-
-        // Управление прогресс-баром
-        const percent = Math.min((total / MIN_ORDER_SUM) * 100, 100);
-        fill.style.width = percent + '%';
-        fill.style.backgroundColor = percent === 100 ? '#4CAF50' : '#F3722C';
-
-        if (isMinMet) {
-            btnMain.innerText = i18n[lang].checkout;
-            btnConfirm.innerText = i18n[lang].confirm;
-            btnMain.disabled = false;
-            btnConfirm.disabled = false;
-            minMsg.innerText = "✅ " + (lang === 'ru' ? "Минимум достигнут" : "Minimum tamamlandı");
-            minMsg.style.color = "#4CAF50";
-        } else {
-            const diff = (MIN_ORDER_SUM - total).toFixed(2);
-            btnMain.innerText = i18n[lang].minSum;
-            btnConfirm.innerText = i18n[lang].minSum;
-            btnMain.disabled = true;
-            btnConfirm.disabled = true;
-            minMsg.innerText = `${i18n[lang].more} ${diff} ₼`;
-            minMsg.style.color = "var(--accent-red)";
-        }
-    }
-
-    function refreshDrawer() {
-        const itemsList = Object.keys(cart);
-        const container = document.getElementById('drawer-items');
-        
-        if(itemsList.length === 0) { 
-            closeDrawer(); 
-            return; 
-        }
-        
-        container.innerHTML = itemsList.map(id => {
-            const p = products.find(x => x.id == id);
-            return `
-            <div class="flex items-center bg-white p-3 rounded-2xl border border-[var(--border)] shadow-sm">
-                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg mr-3 text-xl">${p.icon}</div>
-                <div class="flex-1 font-bold text-xs">${p[lang].n}</div>
-                <div class="flex items-center gap-3">
-                    <button class="remove-btn btn-icon !w-7 !h-7 !text-sm" onclick="updateCount('${id}',-1, event)">-</button>
-                    <span class="font-bold text-sm min-w-[20px] text-center">${cart[id]}</span>
-                    <button class="add-btn btn-icon !w-7 !h-7 !text-sm" onclick="updateCount('${id}',1, event)">+</button>
-                </div>
-            </div>`;
-        }).join('');
+    function updateCartUI() {
+        const items = Object.values(cart).reduce((a, b) => a + b, 0);
+        const total = Object.keys(cart).reduce((acc, id) => acc + (products.find(p => p.id === id).price * cart[id]), 0);
+        const bar = document.getElementById('cart-bar');
+        if(items > 0) {
+            bar.classList.add('active');
+            document.getElementById('txt-items-count').innerText = `${items} ${i18n[lang].items}`;
+            document.getElementById('txt-total-price').innerText = `${total.toFixed(2)} ₼`;
+            const percent = Math.min((total / MIN_ORDER_SUM) * 100, 100);
+            document.getElementById('min-sum-progress-fill').style.width = percent + '%';
+            const msg = document.getElementById('min-sum-msg');
+            const btn = document.getElementById('btn-checkout-main');
+            if(total < MIN_ORDER_SUM) {
+                msg.innerText = `${i18n[lang].more} ${(MIN_ORDER_SUM - total).toFixed(2)} ₼`;
+                btn.disabled = true;
+            } else { msg.innerText = ''; btn.disabled = false; }
+        } else { bar.classList.remove('active'); }
     }
 
     window.openDrawer = () => {
         document.getElementById('cart-drawer').style.display = 'flex';
-        refreshDrawer();
-        tg.HapticFeedback.notificationOccurred('success');
+        renderDrawerItems(); renderUpsell(); updateLangUI();
     };
 
-    window.closeDrawer = () => {
-        document.getElementById('cart-drawer').style.display = 'none';
+    window.closeDrawer = () => { document.getElementById('cart-drawer').style.display = 'none'; };
+
+    function renderDrawerItems() {
+        const container = document.getElementById('drawer-items');
+        container.innerHTML = Object.keys(cart).map(id => {
+            const p = products.find(x => x.id === id);
+            return `
+                <div class="flex items-center gap-4 bg-white p-3 rounded-2xl border border-[var(--border)]">
+                    <img src="${p.img}" class="w-14 h-14 rounded-xl object-cover">
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-[13px] uppercase">${p[lang].n}</h4>
+                        <span class="text-xs text-orange-500 font-black">${p.price.toFixed(2)} ₼</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-gray-50 p-1 rounded-xl">
+                        <button onclick="updateQty('${id}', -1)" class="w-8 h-8 font-bold">-</button>
+                        <span class="text-xs font-black">${cart[id]}</span>
+                        <button onclick="updateQty('${id}', 1)" class="w-8 h-8 font-bold">+</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        const total = Object.keys(cart).reduce((acc, id) => acc + (products.find(p => p.id === id).price * cart[id]), 0);
+        document.getElementById('txt-footer-total-val').innerText = `${total.toFixed(2)} ₼`;
+    }
+
+    function renderUpsell() {
+        const drinks = products.filter(p => p.cat === 'drinks' && !cart[p.id]);
+        const list = document.getElementById('upsell-list');
+        // ТЕПЕРЬ МОЖНО НАЖАТЬ НА КАРТОЧКУ И ДОБАВИТЬ
+        list.innerHTML = drinks.map(p => `
+            <div class="upsell-card" onclick="handleAddToCart('${p.id}')">
+                <img src="${p.img}" class="w-12 h-12 mx-auto rounded-full object-cover mb-2 shadow-sm">
+                <p class="text-[9px] font-bold truncate">${p[lang].n}</p>
+                <p class="text-[10px] text-orange-500 font-black">+${p.price.toFixed(2)} ₼</p>
+            </div>
+        `).join('');
+    }
+
+    window.updateQty = (id, delta) => {
+        cart[id] += delta; if(cart[id] <= 0) delete cart[id];
+        updateCartUI(); renderDrawerItems(); renderProducts(); renderUpsell();
+        if(Object.keys(cart).length === 0) closeDrawer();
     };
 
-    window.changeLang = (newLang) => {
-        lang = newLang;
-        renderCategories();
-        renderProducts();
-        updateLangUI();
-        tg.HapticFeedback.selectionChanged();
+    window.changeLang = (l) => {
+        lang = l; renderCategories(); renderProducts(); updateLangUI(); updateCartUI();
     };
 
     function updateLangUI() {
-        document.querySelectorAll('.top-bar .cat-btn').forEach(b => b.classList.remove('active'));
-        const activeLangBtn = document.getElementById('lang-' + lang);
-        if (activeLangBtn) activeLangBtn.classList.add('active');
-
+        document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
+        document.getElementById('lang-az').classList.toggle('active', lang === 'az');
         document.getElementById('txt-cart-title').innerText = i18n[lang].cart;
-        document.getElementById('txt-footer-total-label').innerText = i18n[lang].totalLabel;
-        document.getElementById('txt-cash-info').innerText = i18n[lang].cash;
-        document.getElementById('txt-form-title').innerText = i18n[lang].formTitle;
-        
+        document.getElementById('confirm-btn').innerText = i18n[lang].confirm;
+        document.getElementById('btn-checkout-main').innerText = i18n[lang].checkout;
         document.getElementById('f-name').placeholder = i18n[lang].name;
         document.getElementById('f-addr').placeholder = i18n[lang].addr;
         document.getElementById('f-comment').placeholder = i18n[lang].comment;
-        
-        updateCartBar();
+        document.getElementById('txt-footer-total-label').innerText = i18n[lang].totalLabel;
+        document.getElementById('txt-cash-info').innerText = i18n[lang].cash;
+        document.getElementById('txt-form-title').innerText = i18n[lang].formTitle;
+        document.getElementById('txt-upsell-title').innerText = i18n[lang].upsell;
+        document.getElementById('txt-scroll-msg').innerText = i18n[lang].scrollMsg;
     }
 
     window.submitOrder = () => {
-        let total = 0;
-        Object.keys(cart).forEach(id => { total += products.find(x => x.id == id).price * cart[id]; });
-        if (total < MIN_ORDER_SUM) return;
-
-        const name = document.getElementById('f-name');
-        const phone = document.getElementById('f-phone');
-        const addr = document.getElementById('f-addr');
-        const comment = document.getElementById('f-comment').value;
-
-        let hasError = false;
-        [name, phone, addr].forEach(el => {
-            if (el.value.length < 3) {
-                el.classList.add('error');
-                setTimeout(() => el.classList.remove('error'), 500);
-                hasError = true;
-            }
-        });
-
-        if (hasError) {
-            tg.HapticFeedback.notificationOccurred('error');
-            document.getElementById('delivery-form-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
+        const n = document.getElementById('f-name'), p = document.getElementById('f-phone'), a = document.getElementById('f-addr');
+        if(!n.value || p.value.length < 10 || !a.value) {
+            document.getElementById('delivery-form-section').scrollIntoView({ behavior: 'smooth' });
+            [n, p, a].forEach(i => { if(!i.value) { i.classList.add('highlight'); setTimeout(() => i.classList.remove('highlight'), 2000); } });
+            tg.HapticFeedback.notificationOccurred('error'); return;
         }
-
-        const orderItems = Object.keys(cart).map(id => {
-            const p = products.find(x => x.id == id);
-            return {
-                name: p[lang].n,
-                count: cart[id],
-                price: p.price
-            };
-        });
-
-        const orderData = {
-            user: name.value,
-            phone: phone.value,
-            address: addr.value,
-            comment: comment,
-            items: orderItems,
-            total: total.toFixed(2),
-            payment: "CASH"
-        };
-
-        tg.sendData(JSON.stringify(orderData));
-        tg.close();
+        tg.HapticFeedback.notificationOccurred('success'); tg.close();
     };
 </script>
-
 </body>
 </html>
 
